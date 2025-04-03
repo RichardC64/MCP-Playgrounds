@@ -1,30 +1,26 @@
-﻿using ModelContextProtocol.Client;
-using ModelContextProtocol.Protocol.Transport;
+﻿using McpPlayground;
+using Spectre.Console;
 
-var client = await McpClientFactory.CreateAsync(new()
-{
-    Id = "everything",
-    Name = "Everything",
-    TransportType = TransportTypes.StdIo,
-    TransportOptions = new()
-    {
-        ["command"] = @"..\..\..\..\McpPlaygroundServer\bin\Debug\net9.0\McpPlaygroundServer.exe"
-    }
-});
+var tools = new[] { nameof(UseMcpPlaygroundServer), nameof(UsePlaywrightServer) };
+var tool = AnsiConsole.Prompt(
+    new SelectionPrompt<string>()
+        .Title("[green]Choisissez votre outil :[/]")
+        .AddChoices(tools));
 
-// Print the list of tools available from the server.
-foreach (var tool in await client.ListToolsAsync())
+// Echo the fruit back to the terminal
+AnsiConsole.MarkupLine($"[green]Invocation de {tool}...[/]");
+
+switch (tool)
 {
-    Console.WriteLine($"{tool.Name} ({tool.Description})");
+    case nameof(UseMcpPlaygroundServer):
+        await UseMcpPlaygroundServer.ExecuteAsync();
+        break;
+    case nameof(UsePlaywrightServer):
+        await UsePlaywrightServer.ExecuteAsync();
+        break;
+    default:
+        AnsiConsole.MarkupLine($"[red]Outil {tool} non pris en charge.[/]");
+        break;
 }
-
-// Execute a tool (this would normally be driven by LLM tool invocations).
-var result = await client.CallToolAsync(
-    "Echo",
-    new Dictionary<string, object?>() { ["message"] = "Hello MCP!" },
-    CancellationToken.None);
-
-// echo always returns one and only one text content object
-Console.WriteLine(result.Content.First(c => c.Type == "text").Text);
 
 Console.ReadLine();
