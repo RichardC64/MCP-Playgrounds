@@ -8,8 +8,7 @@ var client = await McpClientFactory.CreateAsync(new()
     TransportType = TransportTypes.StdIo,
     TransportOptions = new()
     {
-        ["command"] = "npx",
-        ["arguments"] = "-y @modelcontextprotocol/server-everything",
+        ["command"] = @"..\..\..\..\McpPlaygroundServer\bin\Debug\net9.0\McpPlaygroundServer.exe"
     }
 });
 
@@ -21,7 +20,7 @@ foreach (var tool in await client.ListToolsAsync())
 
 // Execute a tool (this would normally be driven by LLM tool invocations).
 var result = await client.CallToolAsync(
-    "echo",
+    "Echo",
     new Dictionary<string, object?>() { ["message"] = "Hello MCP!" },
     CancellationToken.None);
 
