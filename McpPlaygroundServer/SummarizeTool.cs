@@ -1,6 +1,8 @@
 ﻿using System.ComponentModel;
+using McpPlaygroundServer;
 using Microsoft.Extensions.AI;
 using ModelContextProtocol.Server;
+using Spectre.Console;
 
 [McpServerToolType]
 public static class SummarizeTool
@@ -13,6 +15,7 @@ public static class SummarizeTool
         string url,
         CancellationToken cancellationToken)
     {
+        AnsiConsole.MarkupLine($"[red]Run {nameof(SummarizeTool)}/{nameof(SummarizeDownloadedContent)}[/]");
         var content = await httpClient.GetStringAsync(url, cancellationToken);
 
         ChatMessage[] messages =

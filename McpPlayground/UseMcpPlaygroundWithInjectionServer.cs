@@ -4,7 +4,7 @@ using Spectre.Console;
 
 namespace McpPlayground;
 
-public static class UseMcpPlaygroundServer
+public static class UseMcpPlaygroundWithInjectionServer
 {
     public static async Task ExecuteAsync()
     {
@@ -25,9 +25,9 @@ public static class UseMcpPlaygroundServer
             AnsiConsole.MarkupLine($"    {tool.Name} ({tool.Description})");
         }
 
-        AnsiConsole.MarkupLine("[yellow]Appel de l'outil Echo[/]");
+        AnsiConsole.MarkupLine("[yellow]Appel de l'outil ResumeDepuisUrl[/]");
         var result = await client.CallToolAsync(
-            "Echo",
+            "ResumeDepuisUrl",
             new Dictionary<string, object?> { ["message"] = "Richard Clark" },
             CancellationToken.None);
         var response = result.Content.First(c => c.Type == "text")?.Text;
@@ -37,6 +37,3 @@ public static class UseMcpPlaygroundServer
         await client.DisposeAsync();
     }
 }
-
-
-//https://devblogs.microsoft.com/dotnet/dotnet-10-preview-3/

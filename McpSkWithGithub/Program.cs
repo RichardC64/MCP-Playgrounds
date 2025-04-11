@@ -16,7 +16,7 @@ public static class TestClass
         // Prepare and build kernel
 
         
-        using IChatClient ollamaClient = (new OllamaChatClient("http://localhost:11434/", "llama3.1"));
+        using IChatClient ollamaClient = (new OllamaChatClient("http://localhost:11434/", "llama3"));
 
         using var client = new ChatClientBuilder(ollamaClient)
             .UseFunctionInvocation()

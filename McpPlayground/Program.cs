@@ -1,7 +1,7 @@
 ﻿using McpPlayground;
 using Spectre.Console;
 
-var tools = new[] { nameof(UseMcpPlaygroundServer), nameof(UsePlaywrightServer), nameof(UseGithubServer) };
+var tools = new[] { nameof(UseMcpPlaygroundServer), nameof(UsePlaywrightServer), nameof(UseAiTownVilleServer) };
 var tool = AnsiConsole.Prompt(
     new SelectionPrompt<string>()
         .Title("[green]Choisissez votre outil :[/]")
@@ -18,12 +18,13 @@ switch (tool)
     case nameof(UsePlaywrightServer):
         await UsePlaywrightServer.ExecuteAsync();
         break;
-    case nameof(UseGithubServer):
-        await UseGithubServer.ExecuteAsync();
+    case nameof(UseAiTownVilleServer):
+        await UseAiTownVilleServer.ExecuteAsync();
         break;
     default:
         AnsiConsole.MarkupLine($"[red]Outil {tool} non pris en charge.[/]");
         break;
 }
 
+AnsiConsole.MarkupLine("[green]Appuyez sur une touche pour quitter...[/]");
 Console.ReadLine();
