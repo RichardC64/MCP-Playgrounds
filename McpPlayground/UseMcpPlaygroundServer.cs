@@ -8,16 +8,12 @@ public static class UseMcpPlaygroundServer
 {
     public static async Task ExecuteAsync()
     {
-        var client = await McpClientFactory.CreateAsync(new()
+        var client = await McpClientFactory.CreateAsync(new StdioClientTransport(new StdioClientTransportOptions
         {
-            Id = "everything",
-            Name = "Everything",
-            TransportType = TransportTypes.StdIo,
-            TransportOptions = new()
-            {
-                ["command"] = @"..\..\..\..\McpPlaygroundServer\bin\Debug\net9.0\McpPlaygroundServer.exe"
-            }
-        });
+            Name = "everything",
+            Command = @"..\..\..\..\McpPlaygroundServer\bin\Debug\net9.0\McpPlaygroundServer.exe",
+
+        }));
 
         AnsiConsole.MarkupLine("[yellow]Liste des outils du serveur[/]");
         foreach (var tool in await client.ListToolsAsync())
@@ -28,8 +24,7 @@ public static class UseMcpPlaygroundServer
         AnsiConsole.MarkupLine("[yellow]Appel de l'outil Echo[/]");
         var result = await client.CallToolAsync(
             "Echo",
-            new Dictionary<string, object?> { ["message"] = "Richard Clark" },
-            CancellationToken.None);
+            new Dictionary<string, object?> { ["message"] = "Richard Clark" });
         var response = result.Content.First(c => c.Type == "text")?.Text;
         AnsiConsole.MarkupLine(response ?? "???");
 

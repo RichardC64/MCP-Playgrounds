@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel;
+using ModelContextProtocol.Protocol.Messages;
 using ModelContextProtocol.Server;
 using Spectre.Console;
 
@@ -8,8 +9,14 @@ namespace McpPlaygroundServer;
 public static class TownVilleTool
 {
     [McpServerTool(Name = "TownVilleNews"), Description("Donne les dernières informations concernant la ville de TownVille")]
-    public static string ExecuteGetNews()
+    public static async Task<string> ExecuteGetNews(IMcpServer server)
     {
+        await server.SendMessageAsync(new JsonRpcNotification
+        {
+            Method = "notification/townVille",
+            JsonRpc = "coucou"
+            
+        });
         AnsiConsole.MarkupLine($"[red]Run {nameof(TownVilleTool)}/{nameof(ExecuteGetNews)}[/]");
         return $"""
                   Aujourd'hui {DateTime.Today.Date:dd/MM/yyyy} :

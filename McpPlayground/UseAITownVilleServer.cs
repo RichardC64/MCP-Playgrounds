@@ -16,16 +16,14 @@ public static class UseAiTownVilleServer
             .UseFunctionInvocation()
             .Build();
 
-        var tvClient = await McpClientFactory.CreateAsync(new McpServerConfig
+
+        var tvClient = await McpClientFactory.CreateAsync(new StdioClientTransport(new StdioClientTransportOptions
         {
-            Id = "townVille",
-            Name = "TownVille",
-            TransportType = TransportTypes.StdIo,
-            TransportOptions = new Dictionary<string, string>
-            {
-                ["command"] = @"..\..\..\..\McpPlaygroundServer\bin\Debug\net9.0\McpPlaygroundServer.exe"
-            }
-        });
+            Name = "everything",
+            Command = @"..\..\..\..\McpPlaygroundServer\bin\Debug\net9.0\McpPlaygroundServer.exe",
+
+        }));
+
 
         var tools = await tvClient.ListToolsAsync().ConfigureAwait(false);
 
