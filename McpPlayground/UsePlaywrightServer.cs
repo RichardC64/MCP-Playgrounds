@@ -12,7 +12,7 @@ public static class UsePlaywrightServer
         {
             Name = "playwright",
             Command ="npx",
-            Arguments = new List<string>{"-y @playwright/mcp@latest --browser msedge --headless"},
+            Arguments = ["-y", "@playwright/mcp@latest", "--headless"] 
 
         }));
 
