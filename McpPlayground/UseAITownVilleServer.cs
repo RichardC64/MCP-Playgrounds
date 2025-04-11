@@ -1,5 +1,5 @@
 ﻿using Microsoft.Extensions.AI;
-using ModelContextProtocol;
+using Microsoft.Extensions.Logging;
 using ModelContextProtocol.Client;
 using ModelContextProtocol.Protocol.Transport;
 using Spectre.Console;
@@ -10,18 +10,24 @@ public static class UseAiTownVilleServer
 {
     public static async Task ExecuteAsync()
     {
+        using var loggerFactory = LoggerFactory.Create(builder =>
+        {
+            builder.AddConsole(); // Log to console
+            builder.SetMinimumLevel(LogLevel.Trace); // Set minimum log level
+        });
+
         using IChatClient ollamaClient = (new OllamaChatClient("http://localhost:11434/", "llama3.1"));
 
         using var client = new ChatClientBuilder(ollamaClient)
             .UseFunctionInvocation()
+            .UseLogging(loggerFactory)
             .Build();
 
-
+        
         var tvClient = await McpClientFactory.CreateAsync(new StdioClientTransport(new StdioClientTransportOptions
         {
             Name = "everything",
-            Command = @"..\..\..\..\McpPlaygroundServer\bin\Debug\net9.0\McpPlaygroundServer.exe",
-
+            Command = @"..\..\..\..\McpPlaygroundServer\bin\Debug\net9.0\McpPlaygroundServer.exe"
         }));
 
 
@@ -40,10 +46,11 @@ public static class UseAiTownVilleServer
 
             if (string.Equals("bye", prompt, StringComparison.InvariantCultureIgnoreCase))
                 break;
+            // jouer avec la température
             var result = await client.GetResponseAsync(prompt, new()
             {
                 Tools = [.. tools],
-                Temperature = 0
+                Temperature = (float?)0.5
             });
 
             AnsiConsole.MarkupLine($"\n\n[yellow]{prompt}\n{result}[/]");
