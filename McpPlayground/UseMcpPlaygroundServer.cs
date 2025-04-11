@@ -33,6 +33,11 @@ public static class UseMcpPlaygroundServer
         var response = result.Content.First(c => c.Type == "text")?.Text;
         AnsiConsole.MarkupLine(response ?? "???");
 
+        AnsiConsole.MarkupLine("[yellow]Appel de l'outil TownVilleNews[/]");
+        result = await client.CallToolAsync("TownVilleNews", null, CancellationToken.None);
+        response = result.Content.First(c => c.Type == "text")?.Text;
+        AnsiConsole.MarkupLine(response ?? "???");
+
 
         await client.DisposeAsync();
     }

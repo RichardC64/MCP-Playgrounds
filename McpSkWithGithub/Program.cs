@@ -1,8 +1,9 @@
-﻿using ModelContextProtocol;
-using ModelContextProtocol.Client;
-using ModelContextProtocol.Protocol.Types;
-using Microsoft.Extensions.AI;
+﻿using Microsoft.Extensions.AI;
 using Microsoft.Extensions.Logging;
+using ModelContextProtocol;
+using ModelContextProtocol.Client;
+using ModelContextProtocol.Protocol.Transport;
+using ModelContextProtocol.Protocol.Types;
 
 
 await TestClass.ExecuteAsync();
@@ -22,7 +23,7 @@ public static class TestClass
             .Build();
 
         var loggerFactory = LoggerFactory.Create(configure => configure.AddConsole());
-        
+
 
         // Create an MCPClient for the GitHub server
         await using var mcpClient = await McpClientFactory.CreateAsync(
@@ -46,16 +47,33 @@ public static class TestClass
                 }
             }, null, loggerFactory).ConfigureAwait(false);
 
-        var tools = await mcpClient.ListToolsAsync().ConfigureAwait(false);
-       
-        var prompt = "give me a summary of the last 4 commits on the microsoft/semantic-kernel repository?";
+        var githubTools = await mcpClient.ListToolsAsync().ConfigureAwait(false);
+
+        var tvClient = await McpClientFactory.CreateAsync(new()
+        {
+            Id = "everything",
+            Name = "Everything",
+            TransportType = TransportTypes.StdIo,
+            TransportOptions = new()
+            {
+                ["command"] = @"..\..\..\..\McpPlaygroundServer\bin\Debug\net9.0\McpPlaygroundServer.exe"
+            }
+        });
+
+        var tvTools = await tvClient.ListToolsAsync().ConfigureAwait(false);
+
+        var allTools = githubTools.Concat(tvTools).ToList();
+
+        //var prompt = "give me a summary of the last 4 commits on the microsoft/semantic-kernel repository?";
+        var prompt = "quelles sont les dernières informations concernant la ville de TownVille?";
         var result = await client.GetResponseAsync(prompt, new()
         {
-            Tools = [..tools],
+            Tools = [..allTools],
             Temperature = 0
         });
 
         Console.WriteLine($"\n\n{prompt}\n{result}");
 
     }
+
 }
