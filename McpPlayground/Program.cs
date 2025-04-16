@@ -1,7 +1,7 @@
 ﻿using McpPlayground;
 using Spectre.Console;
 
-var tools = new[] { nameof(UseMcpPlaygroundServer), nameof(UsePlaywrightServer), nameof(UseAiTownVilleServer) };
+var tools = new[] { nameof(UseMcpPlaygroundServer), nameof(UseAiTownVilleServer), nameof(UsePlaywrightServer) };
 var tool = AnsiConsole.Prompt(
     new SelectionPrompt<string>()
         .Title("[green]Choisissez votre outil :[/]")

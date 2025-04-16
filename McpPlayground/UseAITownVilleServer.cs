@@ -13,7 +13,7 @@ public static class UseAiTownVilleServer
         using var loggerFactory = LoggerFactory.Create(builder =>
         {
             builder.AddConsole(); // Log to console
-            builder.SetMinimumLevel(LogLevel.Trace); // Set minimum log level
+            builder.SetMinimumLevel(LogLevel.Debug); // Set minimum log level
         });
 
         using IChatClient ollamaClient = (new OllamaChatClient("http://localhost:11434/", "llama3.1"));
@@ -23,12 +23,13 @@ public static class UseAiTownVilleServer
             .UseLogging(loggerFactory)
             .Build();
 
-        
-        var tvClient = await McpClientFactory.CreateAsync(new StdioClientTransport(new StdioClientTransportOptions
+        var transportOptions = new StdioClientTransportOptions
         {
-            Name = "everything",
-            Command = @"..\..\..\..\McpPlaygroundServer\bin\Debug\net9.0\McpPlaygroundServer.exe"
-        }));
+            Name = "townVilleServer",
+            Command = "dotnet",
+            Arguments = ["run", "--project", @"..\..\..\..\McpPlaygroundServer", "--no-build"]
+        };
+        var tvClient = await McpClientFactory.CreateAsync(new StdioClientTransport(transportOptions), null, loggerFactory);
 
 
         var tools = await tvClient.ListToolsAsync().ConfigureAwait(false);
@@ -50,7 +51,7 @@ public static class UseAiTownVilleServer
             var result = await client.GetResponseAsync(prompt, new()
             {
                 Tools = [.. tools],
-                Temperature = (float?)0.5
+                Temperature = (float?)0
             });
 
             AnsiConsole.MarkupLine($"\n\n[yellow]{prompt}\n{result}[/]");

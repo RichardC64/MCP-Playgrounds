@@ -10,9 +10,9 @@ public static class UseMcpPlaygroundServer
     {
         var client = await McpClientFactory.CreateAsync(new StdioClientTransport(new StdioClientTransportOptions
         {
-            Name = "everything",
-            Command = @"..\..\..\..\McpPlaygroundServer\bin\Debug\net9.0\McpPlaygroundServer.exe",
-
+            Name = "myserver",
+            Command = "dotnet",
+            Arguments = ["run", "--project", @"..\..\..\..\McpPlaygroundServer", "--no-build"]
         }));
 
         AnsiConsole.MarkupLine("[yellow]Liste des outils du serveur[/]");
