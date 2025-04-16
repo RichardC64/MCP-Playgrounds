@@ -1,5 +1,13 @@
 ﻿using McpPlayground;
+using Serilog;
 using Spectre.Console;
+
+Log.Logger = new LoggerConfiguration()
+    .MinimumLevel.Debug()
+    .WriteTo.File("logs/client_log.txt", rollingInterval: RollingInterval.Day)
+    .CreateLogger();
+
+Log.Information("Start Client");
 
 var tools = new[] { nameof(UseMcpPlaygroundServer), nameof(UseAiTownVilleServer), nameof(UsePlaywrightServer) };
 var tool = AnsiConsole.Prompt(

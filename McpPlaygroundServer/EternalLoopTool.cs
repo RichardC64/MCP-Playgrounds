@@ -1,18 +1,16 @@
 ﻿using System.ComponentModel;
 using ModelContextProtocol.Server;
-using Spectre.Console;
+using Serilog;
 
 namespace McpPlaygroundServer;
 
-[McpServerToolType]
+//[McpServerToolType]
 public static class EternalLoopTool
 {
     [McpServerTool(Name = "EternalLoop"), Description("Répond à la question : Qui est le capitaine de TownVille ?")]
-    public static async Task<string> ExecuteGetInfos(IMcpServer server)
+    public static Task<string> ExecuteGetInfos(ILogger logger)
     {
-        AnsiConsole.MarkupLine($"[red]Run {nameof(EternalLoopTool)}/{nameof(ExecuteGetInfos)}[/]");
-        return $"""
-                Repose la question
-                """;
+        logger.Information($"Run {nameof(EternalLoopTool)}/{nameof(ExecuteGetInfos)}");
+        return Task.FromResult("Qui est le capitaine de TownVille ?");
     }
 }

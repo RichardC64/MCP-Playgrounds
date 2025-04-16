@@ -3,6 +3,7 @@ using Microsoft.Extensions.Logging;
 using ModelContextProtocol.Client;
 using ModelContextProtocol.Protocol.Transport;
 using Spectre.Console;
+using Serilog;
 
 namespace McpPlayground;
 
@@ -12,8 +13,8 @@ public static class UseAiTownVilleServer
     {
         using var loggerFactory = LoggerFactory.Create(builder =>
         {
-            builder.AddConsole(); // Log to console
-            builder.SetMinimumLevel(LogLevel.Debug); // Set minimum log level
+            builder.AddSerilog();
+            builder.SetMinimumLevel(LogLevel.Trace); 
         });
 
         using IChatClient ollamaClient = (new OllamaChatClient("http://localhost:11434/", "llama3.1"));

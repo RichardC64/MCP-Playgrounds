@@ -1,5 +1,7 @@
-﻿using ModelContextProtocol.Client;
+﻿using Microsoft.Extensions.Logging;
+using ModelContextProtocol.Client;
 using ModelContextProtocol.Protocol.Transport;
+using Serilog;
 using Spectre.Console;
 
 namespace McpPlayground;
@@ -8,12 +10,20 @@ public static class UseMcpPlaygroundServer
 {
     public static async Task ExecuteAsync()
     {
-        var client = await McpClientFactory.CreateAsync(new StdioClientTransport(new StdioClientTransportOptions
+        using var loggerFactory = LoggerFactory.Create(builder =>
+        {
+            builder.AddSerilog();
+            builder.SetMinimumLevel(LogLevel.Trace); 
+        });
+
+        var transportOptions = new StdioClientTransportOptions
         {
             Name = "myserver",
             Command = "dotnet",
             Arguments = ["run", "--project", @"..\..\..\..\McpPlaygroundServer", "--no-build"]
-        }));
+        };
+
+        var client = await McpClientFactory.CreateAsync(new StdioClientTransport(transportOptions), null, loggerFactory);
 
         AnsiConsole.MarkupLine("[yellow]Liste des outils du serveur[/]");
         foreach (var tool in await client.ListToolsAsync())
