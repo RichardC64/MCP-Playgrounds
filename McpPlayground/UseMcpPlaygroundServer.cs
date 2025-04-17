@@ -23,7 +23,7 @@ public static class UseMcpPlaygroundServer
             Arguments = ["run", "--project", @"..\..\..\..\McpPlaygroundServer", "--no-build"]
         };
 
-        var client = await McpClientFactory.CreateAsync(new StdioClientTransport(transportOptions), null, loggerFactory);
+        await using var client = await McpClientFactory.CreateAsync(new StdioClientTransport(transportOptions), null, loggerFactory);
 
         AnsiConsole.MarkupLine("[yellow]Liste des outils du serveur[/]");
         foreach (var tool in await client.ListToolsAsync())
@@ -31,17 +31,26 @@ public static class UseMcpPlaygroundServer
             AnsiConsole.MarkupLine($"    {tool.Name} ({tool.Description})");
         }
 
-        AnsiConsole.MarkupLine("[yellow]Appel de l'outil Echo[/]");
-        var result = await client.CallToolAsync(
-            "Echo",
-            new Dictionary<string, object?> { ["message"] = "Richard Clark" });
-        var response = result.Content.First(c => c.Type == "text")?.Text;
-        AnsiConsole.MarkupLine(response ?? "???");
+        var selectedTool = "Echo";
+        AnsiConsole.MarkupLine($"[yellow]Appel de l'outil {selectedTool}[/]");
 
+        while (true)
+        {
+            var message = AnsiConsole.Prompt(
+                new TextPrompt<string>("Quelle est votre question ? ('bye' pour terminer)"));
 
-        await client.DisposeAsync();
+            if (string.Equals("bye", message, StringComparison.InvariantCultureIgnoreCase))
+                break;
+
+            
+            var toolArgs = new Dictionary<string, object?> { ["message"] = message };
+
+            var result = await client.CallToolAsync(selectedTool, toolArgs);
+
+            var response = result.Content.First(c => c.Type == "text")?.Text;
+            AnsiConsole.MarkupLine(result.IsError ?
+                $"[red]Erreur : {response}[/]" : 
+                $"[green]Réponse : {response}[/]");
+        }
     }
 }
-
-
-//https://devblogs.microsoft.com/dotnet/dotnet-10-preview-3/
