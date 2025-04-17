@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.AI;
+﻿//#define LOG
+using Microsoft.Extensions.AI;
 using Microsoft.Extensions.Logging;
 using ModelContextProtocol.Client;
 using ModelContextProtocol.Protocol.Transport;
@@ -17,8 +18,11 @@ public static class UseAiTownVilleServer
             builder.SetMinimumLevel(LogLevel.Trace); 
         });
 
-
-        using var httpClient = new HttpClient(); // new HttpClient(new LoggingHandler { InnerHandler = new HttpClientHandler() });
+#if LOG
+        using var httpClient = new HttpClient(new LoggingHandler { InnerHandler = new HttpClientHandler() });
+#else
+        using var httpClient = new HttpClient();
+#endif
 
         using IChatClient ollamaClient = (new OllamaChatClient("http://localhost:11434/", "llama3.1", httpClient));
 
