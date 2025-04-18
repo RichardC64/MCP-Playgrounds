@@ -1,4 +1,4 @@
-﻿//#define LOG
+﻿// #define LOG
 using Microsoft.Extensions.AI;
 using Microsoft.Extensions.Logging;
 using ModelContextProtocol.Client;
@@ -65,8 +65,7 @@ public static class UseAiTownVilleServer
             AnsiConsole.MarkupLine($"\n\n[yellow]{prompt}\n{result}[/]");
         }
 
-        await tvClient.DisposeAsync();
-        
+        await tvClient.DisposeAsync();        
 
     }
 
