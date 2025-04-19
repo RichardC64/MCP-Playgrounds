@@ -1,5 +1,7 @@
 ﻿using System.ComponentModel;
+using System.Text;
 using System.Text.Json;
+using HtmlAgilityPack;
 using ModelContextProtocol.Server;
 using Serilog;
 
@@ -9,7 +11,7 @@ namespace McpPlaygroundServer;
 public static class DedevdevNetTool
 {
     [McpServerTool(Name = "devdevdev.NET"), Description("Donne les dernières informations sur les derniers épisode du site devdevdev.net, le podcast des développeurs dotnet .NET")]
-    public static async Task<IEnumerable<PostData>> ExecuteGetNews(ILogger logger, HttpClient client, [Description("un mot clé de recherche")] string search)
+    public static async Task<string> ExecuteGetNews(ILogger logger, HttpClient client, [Description("un mot clé de recherche")] string search)
     {
         logger.Information($"Run {nameof(DedevdevNetTool)}/{nameof(ExecuteGetNews)} Search={search}");
         // historique sur un an seulement
@@ -19,29 +21,28 @@ public static class DedevdevNetTool
         logger.Information($"Response: {response.StatusCode}");
 
         var document = await JsonDocument.ParseAsync(await response.Content.ReadAsStreamAsync());
-        // json is an array of objects, each object has a property called date which is the date, a property called title with a child called rendered and a property called content with a child called rendered.
-        var posts = document.RootElement.EnumerateArray()
-            .Select(x => new PostData(
-                x.GetProperty("date").GetDateTime(),
-                x.GetProperty("title").GetProperty("rendered").GetString(),
-                x.GetProperty("content").GetProperty("rendered").GetString(),
-                x.GetProperty("guid").GetProperty("rendered").GetString()
-            )).ToList();
-
-        foreach (var postData in posts)
+         var sb = new StringBuilder();
+        foreach (var post in document.RootElement.EnumerateArray())
         {
-            logger.Information($"Post: {postData.link} {postData.title}");
+            var doc = new HtmlDocument();
+            var content = post.GetProperty("content").GetProperty("rendered").GetString();
+
+            if (content != null)
+            {
+                doc.LoadHtml(content);
+                content = doc.DocumentNode.InnerText;
+            }
+
+            sb.AppendLine($"Date: {post.GetProperty("date").GetDateTime()}");
+            sb.AppendLine($"Titre: {post.GetProperty("title").GetProperty("rendered").GetString()}");
+            sb.AppendLine($"Lien: {post.GetProperty("guid").GetProperty("rendered").GetString()}");
+            sb.AppendLine($"Contenu: {content}");
+            sb.AppendLine("");
+            sb.AppendLine("");
+
+            logger.Debug(post.GetProperty("guid").GetProperty("rendered").GetString() ?? "???");
         }
 
-        return posts;
+        return sb.ToString();
     }
-    [Description("Représente les données d'un épisode du podcast devdevdev.net")]
-    public record PostData(
-        [Description("Date de publication de l'épisode")]
-        DateTime date,
-        [Description("Titre de l'épisode")] string? title,
-        [Description("Contenu de l'épisode au format Html")]
-        string? content,
-        [Description("Adresse Internet de l'épisode. Ne pas la modifier")]
-        string? link);
 }

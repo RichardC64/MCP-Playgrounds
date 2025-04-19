@@ -9,6 +9,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="HtmlAgilityPack" Version="1.12.1" />
     <PackageReference Include="Microsoft.Extensions.Hosting" Version="10.0.0-preview.3.25171.5" />
     <PackageReference Include="ModelContextProtocol" Version="0.1.0-preview.9" />
     <PackageReference Include="Serilog.Extensions.Hosting" Version="9.0.1-dev-02307" />
