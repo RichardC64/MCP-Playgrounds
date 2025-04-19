@@ -16,12 +16,6 @@ builder.Services
     .WithStdioServerTransport()
     .WithToolsFromAssembly();
 
-builder.Services.AddSingleton(_ =>
-{
-    var client = new HttpClient { BaseAddress = new Uri("https://devdevdev.net") };
-    return client;
-});
-
 
 await builder.Build().RunAsync();
 

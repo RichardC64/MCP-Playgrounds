@@ -9,7 +9,7 @@ Log.Logger = new LoggerConfiguration()
 
 Log.Information("Start Client");
 
-var tools = new[] { nameof(UseMcpPlaygroundServer), nameof(UseMcpPlaygroundServerComplexDatas), nameof(UseAiTownVilleServer), nameof(UsePlaywrightServer) };
+var tools = new[] { nameof(UseMcpPlaygroundServer), nameof(UseMcpPlaygroundServerComplexDatas), nameof(UseAiTownVilleServer), nameof(UseAiWithSseServer), nameof(UsePlaywrightServer) };
 var tool = AnsiConsole.Prompt(
     new SelectionPrompt<string>()
         .Title("[green]Choisissez votre outil :[/]")
@@ -31,6 +31,9 @@ switch (tool)
         break;
     case nameof(UseAiTownVilleServer):
         await UseAiTownVilleServer.ExecuteAsync();
+        break;
+    case nameof(UseAiWithSseServer):
+        await UseAiWithSseServer.ExecuteAsync();
         break;
     default:
         AnsiConsole.MarkupLine($"[red]Outil {tool} non pris en charge.[/]");
