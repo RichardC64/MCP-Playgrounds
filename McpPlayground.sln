@@ -1,11 +1,13 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
-VisualStudioVersion = 17.14.35906.104 d17.14
+VisualStudioVersion = 17.14.35906.104
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "McpPlayground", "McpPlayground\McpPlayground.csproj", "{FF91EEFF-DC9D-4590-9A24-75812957CF8B}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "McpPlaygroundServer", "McpPlaygroundServer\McpPlaygroundServer.csproj", "{40B315E8-E18A-4D54-B42F-01187552D0E8}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AspNetMcpServer", "AspNetMcpServer\AspNetMcpServer.csproj", "{16051A7F-672B-4DCE-B9AB-E12041BEBD31}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -21,6 +23,10 @@ Global
 		{40B315E8-E18A-4D54-B42F-01187552D0E8}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{40B315E8-E18A-4D54-B42F-01187552D0E8}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{40B315E8-E18A-4D54-B42F-01187552D0E8}.Release|Any CPU.Build.0 = Release|Any CPU
+		{16051A7F-672B-4DCE-B9AB-E12041BEBD31}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{16051A7F-672B-4DCE-B9AB-E12041BEBD31}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{16051A7F-672B-4DCE-B9AB-E12041BEBD31}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{16051A7F-672B-4DCE-B9AB-E12041BEBD31}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
