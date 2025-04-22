@@ -4,6 +4,8 @@ using ModelContextProtocol.Server;
 using System.ComponentModel;
 using System.Text;
 using System.Text.Json;
+using System.Text.Json.Serialization;
+using System.Text.Json.Serialization.Metadata;
 
 namespace AspNetMcpServer;
 
@@ -44,3 +46,12 @@ public sealed class DedevdevNetTool
         return sb.ToString();
     }
 }
+
+//public record WeatherForecast(DateTimeOffset Date, float TemperatureCelsius, string? Summary);
+
+//[JsonSourceGenerationOptions(WriteIndented = true)]
+//[JsonSerializable(typeof(WeatherForecast))]
+//internal partial class SourceGenerationContext : JsonSerializerContext
+//{
+
+//}

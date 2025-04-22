@@ -2,6 +2,7 @@
 using Microsoft.Extensions.Logging;
 using ModelContextProtocol;
 using ModelContextProtocol.Client;
+using ModelContextProtocol.Protocol.Messages;
 using ModelContextProtocol.Protocol.Transport;
 using Serilog;
 using Spectre.Console;
@@ -41,6 +42,12 @@ public static class UseAiWithSseServer
         await tvClient.SendNotificationAsync("test/notification", new Message{ Content = "Coucou depuis le client"}).ConfigureAwait(false);
 
         tvClient.RegisterNotificationHandler("test/notification", async (notification, cancellationToken) =>
+        {
+            var message = notification?.Params?["Content"]?.ToString();
+            Console.WriteLine($"Received notification: {message}");
+        });
+
+        tvClient.RegisterNotificationHandler(NotificationMethods.LoggingMessageNotification, async (notification, cancellationToken) =>
         {
             var message = notification?.Params?["Message"]?.ToString();
             Console.WriteLine($"Received notification: {message}");
