@@ -1,4 +1,6 @@
-﻿using Microsoft.Extensions.AI;
+﻿using System.Text.Json;
+using System.Text.Json.Serialization;
+using Microsoft.Extensions.AI;
 using Microsoft.Extensions.Logging;
 using ModelContextProtocol;
 using ModelContextProtocol.Client;
@@ -49,7 +51,7 @@ public static class UseAiWithSseServer
 
         tvClient.RegisterNotificationHandler(NotificationMethods.LoggingMessageNotification, async (notification, cancellationToken) =>
         {
-            var message = notification?.Params?["Message"]?.ToString();
+            var message = notification?.Params?.ToString();
             Console.WriteLine($"Received notification: {message}");
         });
 
@@ -75,7 +77,33 @@ public static class UseAiWithSseServer
                 Temperature = (float?)0
             });
 
-            AnsiConsole.MarkupLine($"\n\n[yellow]{prompt}\n{result}[/]");
+            foreach (var resultMessage in result.Messages)
+            {
+                if (resultMessage.Role == ChatRole.Tool)
+                {
+                    AnsiConsole.MarkupLine($"[blue]Réponse de l'outil[/]");
+                    if (resultMessage.Contents.FirstOrDefault() is not FunctionResultContent
+                        {
+                            Result: JsonElement jsonElement
+                        }) continue;
+
+                    Console.WriteLine(jsonElement.GetProperty("content").EnumerateArray().FirstOrDefault().GetProperty("text").ToString());
+                }
+                else if (resultMessage.Role == ChatRole.Assistant)
+                {
+                    switch (resultMessage.Contents.FirstOrDefault())
+                    {
+                        case FunctionCallContent functionCallContent:
+                            AnsiConsole.MarkupLine("[yellow]Appel de l'outil[/]");
+                            Console.WriteLine($"Outil : {functionCallContent.Name}, Argument : {functionCallContent.Arguments?.Values.First()}");
+                            break;
+                        case TextContent textContent:
+                            AnsiConsole.MarkupLine("[yellow]Reformulation par l'IA[/]");
+                            Console.WriteLine($"{textContent.Text}");
+                            break;
+                    }
+                }
+            }
         }
 
         await tvClient.DisposeAsync();

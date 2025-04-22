@@ -26,19 +26,25 @@ public sealed class DedevdevNetTool
         foreach (var post in document.RootElement.EnumerateArray())
         {
             var doc = new HtmlDocument();
-            var content = post.GetProperty("content").GetProperty("rendered").GetString();
+            //var content = post.GetProperty("content").GetProperty("rendered").GetString();
 
-            if (content != null)
-            {
-                doc.LoadHtml(content);
-                content = doc.DocumentNode.InnerText;
-            }
+            //if (content != null)
+            //{
+            //    doc.LoadHtml(content);
+            //    content = doc.DocumentNode.InnerText;
+            //    // get first 1000 characters
+            //    if (content.Length > 100)
+            //    {
+            //        content = content[..100];
+            //    }
+            //}
+
+
 
             sb.AppendLine($"Date: {post.GetProperty("date").GetDateTime()}");
             sb.AppendLine($"Titre: {post.GetProperty("title").GetProperty("rendered").GetString()}");
             sb.AppendLine($"Lien: {post.GetProperty("guid").GetProperty("rendered").GetString()}");
-            sb.AppendLine($"Contenu: {content}");
-            sb.AppendLine("");
+            //sb.AppendLine($"Contenu: {content}");
             sb.AppendLine("");
 
         }
