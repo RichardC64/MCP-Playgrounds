@@ -1,5 +1,6 @@
 ﻿using Microsoft.Extensions.AI;
 using Microsoft.Extensions.Logging;
+using ModelContextProtocol;
 using ModelContextProtocol.Client;
 using ModelContextProtocol.Protocol.Transport;
 using Serilog;
@@ -37,6 +38,13 @@ public static class UseAiWithSseServer
         };
         var tvClient = await McpClientFactory.CreateAsync(new SseClientTransport(transportOptions), null, loggerFactory);
 
+        await tvClient.SendNotificationAsync("test/notification", new Message{ Content = "Coucou depuis le client"}).ConfigureAwait(false);
+
+        tvClient.RegisterNotificationHandler("test/notification", async (notification, cancellationToken) =>
+        {
+            var message = notification?.Params?["Message"]?.ToString();
+            Console.WriteLine($"Received notification: {message}");
+        });
 
         var tools = await tvClient.ListToolsAsync().ConfigureAwait(false);
 

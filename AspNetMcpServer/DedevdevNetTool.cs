@@ -1,8 +1,9 @@
-﻿using System.ComponentModel;
+﻿using HtmlAgilityPack;
+using ModelContextProtocol;
+using ModelContextProtocol.Server;
+using System.ComponentModel;
 using System.Text;
 using System.Text.Json;
-using HtmlAgilityPack;
-using ModelContextProtocol.Server;
 
 namespace AspNetMcpServer;
 
@@ -10,8 +11,9 @@ namespace AspNetMcpServer;
 public sealed class DedevdevNetTool
 {
     [McpServerTool(Name = "devdevdev.NET"), Description("Donne les dernières informations sur les derniers épisode du site devdevdev.net, le podcast des développeurs dotnet .NET")]
-    public static async Task<string> ExecuteGetNews(HttpClient client, [Description("un mot clé de recherche")] string search)
+    public static async Task<string> ExecuteGetNews(IMcpServer server, HttpClient client, [Description("un mot clé de recherche")] string search)
     {
+        await server.SendNotificationAsync("notifications/message", "coucou");
         // historique sur un an seulement
         var response = await client.GetAsync($"/wp-json/wp/v2/posts?per_page=5&search={search}");
         response.EnsureSuccessStatusCode();
