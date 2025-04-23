@@ -15,8 +15,7 @@ var mcpServerBuilder = builder.Services.AddMcpServer()
                 var message =  notification?.Params?["Message"]?.ToString();
 
                 mcpServer.AsClientLoggerProvider().CreateLogger("test").Log(LogLevel.Information, "coucou");
-                Console.WriteLine($"Received notification: {message}");
-                await mcpServer.SendNotificationAsync("test/notification", new Message{Content = "Hello from server!" }, serializerOptions:JsonContext.Default.Options, cancellationToken: cancellationToken);
+                await mcpServer.SendNotificationAsync("test/notification", new Message{Content = "Démarrage du serveur" }, serializerOptions:JsonContext.Default.Options, cancellationToken: cancellationToken);
             });
 
             

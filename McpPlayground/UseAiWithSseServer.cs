@@ -1,10 +1,7 @@
 ﻿using System.Text.Json;
-using System.Text.Json.Serialization;
 using Microsoft.Extensions.AI;
 using Microsoft.Extensions.Logging;
-using ModelContextProtocol;
 using ModelContextProtocol.Client;
-using ModelContextProtocol.Protocol.Messages;
 using ModelContextProtocol.Protocol.Transport;
 using Serilog;
 using Spectre.Console;
@@ -39,29 +36,25 @@ public static class UseAiWithSseServer
             Name = "myaspnetServer",
             Endpoint = new Uri("http://localhost:5261/sse")
         };
-        var tvClient = await McpClientFactory.CreateAsync(new SseClientTransport(transportOptions), null, loggerFactory);
 
-        await tvClient.SendNotificationAsync("test/notification", new Message{ Content = "Coucou depuis le client"}).ConfigureAwait(false);
-
-        tvClient.RegisterNotificationHandler("test/notification", async (notification, cancellationToken) =>
+        var options = new McpClientOptions
         {
-            var message = notification?.Params?["Content"]?.ToString();
-            Console.WriteLine($"Received notification: {message}");
-        });
+            Capabilities = new()
+            {
+                NotificationHandlers = [
+                    new ("notifications/message", (notification, _) =>
+                    {
+                        var message = notification?.Params?.ToString();
+                        AnsiConsole.MarkupLine($"[red]Received notification: {message}[/]");
+                        return ValueTask.CompletedTask;
+                    })
+                    ]
+            }
+        };
+        var tvClient = await McpClientFactory.CreateAsync(new SseClientTransport(transportOptions), options, loggerFactory);
 
-        tvClient.RegisterNotificationHandler(NotificationMethods.LoggingMessageNotification, async (notification, cancellationToken) =>
-        {
-            var message = notification?.Params?.ToString();
-            Console.WriteLine($"Received notification: {message}");
-        });
 
         var tools = await tvClient.ListToolsAsync().ConfigureAwait(false);
-
-        AnsiConsole.MarkupLine("[yellow]Liste des outils du serveur[/]");
-        foreach (var tool in await tvClient.ListToolsAsync())
-        {
-            AnsiConsole.MarkupLine($"    {tool.Name} ({tool.Description})");
-        }
 
         while (true)
         {
@@ -70,6 +63,9 @@ public static class UseAiWithSseServer
 
             if (string.Equals("bye", prompt, StringComparison.InvariantCultureIgnoreCase))
                 break;
+
+           
+
             // jouer avec la température
             var result = await client.GetResponseAsync(prompt, new()
             {
