@@ -37,26 +37,11 @@ public static class UseAiWithSseServer
             Endpoint = new Uri("http://localhost:5261/sse")
         };
 
-        var options = new McpClientOptions
-        {
-            Capabilities = new()
-            {
-                NotificationHandlers = [
-                    new ("notifications/message", (notification, _) =>
-                    {
-                        var message = notification?.Params?.ToString();
-                        AnsiConsole.MarkupLine($"[red]Received notification: {message}[/]");
-                        return ValueTask.CompletedTask;
-                    })
-                    ]
-            }
-        };
-        var tvClient = await McpClientFactory.CreateAsync(new SseClientTransport(transportOptions), options, loggerFactory);
-
-
-        var tools = await tvClient.ListToolsAsync().ConfigureAwait(false);
+        var mcpClient = await McpClientFactory.CreateAsync(new SseClientTransport(transportOptions), CreateOptions(), loggerFactory);
+        var tools = await mcpClient.ListToolsAsync().ConfigureAwait(false);
 
         while (true)
+
         {
             var prompt = AnsiConsole.Prompt(
                 new TextPrompt<string>("Votre question ? ('bye' pour terminer)"));
@@ -64,15 +49,13 @@ public static class UseAiWithSseServer
             if (string.Equals("bye", prompt, StringComparison.InvariantCultureIgnoreCase))
                 break;
 
-           
-
-            // jouer avec la température
             var result = await client.GetResponseAsync(prompt, new()
             {
                 Tools = [.. tools],
                 Temperature = (float?)0
             });
 
+            // Réception des messages de l'IA et des outils
             foreach (var resultMessage in result.Messages)
             {
                 if (resultMessage.Role == ChatRole.Tool)
@@ -82,7 +65,6 @@ public static class UseAiWithSseServer
                         {
                             Result: JsonElement jsonElement
                         }) continue;
-
                     Console.WriteLine(jsonElement.GetProperty("content").EnumerateArray().FirstOrDefault().GetProperty("text").ToString());
                 }
                 else if (resultMessage.Role == ChatRole.Assistant)
@@ -102,7 +84,24 @@ public static class UseAiWithSseServer
             }
         }
 
-        await tvClient.DisposeAsync();
+        await mcpClient.DisposeAsync();
+    }
 
+    private static McpClientOptions CreateOptions()
+    {
+        return new McpClientOptions
+        {
+            Capabilities = new()
+            {
+                NotificationHandlers = [
+                    new ("notifications/message", (notification, _) =>
+                    {
+                        var message = notification?.Params?.ToString();
+                        AnsiConsole.MarkupLine($"[red]Received notification: {message}[/]");
+                        return ValueTask.CompletedTask;
+                    })
+                ]
+            }
+        };
     }
 }

@@ -17,7 +17,10 @@ public sealed class DedevdevNetTool
         var response = await client.GetAsync($"/wp-json/wp/v2/posts?per_page=5&search={search}");
         response.EnsureSuccessStatusCode();
 
+        #region next video
         await server.SendNotificationAsync("notifications/message", "Appel API terminé");
+        #endregion
+
         var document = await JsonDocument.ParseAsync(await response.Content.ReadAsStreamAsync());
          var sb = new StringBuilder();
         foreach (var post in document.RootElement.EnumerateArray())
