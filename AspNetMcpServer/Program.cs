@@ -1,11 +1,19 @@
 using AspNetMcpServer;
+using ModelContextProtocol.Protocol.Types;
+using ModelContextProtocol.Server;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddMcpServer()
     .WithHttpTransport()
+    .WithSetLoggingLevelHandler(Handler)
     .WithTools<DedevdevNetTool>();
 
-builder.Services.AddTransient(_ =>
+ValueTask<EmptyResult> Handler(RequestContext<SetLevelRequestParams> arg1, CancellationToken arg2)
+{
+    throw new NotImplementedException();
+}
+
+builder.Services.AddSingleton(_ =>
 {
     var client = new HttpClient { BaseAddress = new Uri("https://devdevdev.net") };
     return client;

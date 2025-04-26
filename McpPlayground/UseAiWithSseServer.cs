@@ -41,7 +41,6 @@ public static class UseAiWithSseServer
         var tools = await mcpClient.ListToolsAsync().ConfigureAwait(false);
 
         while (true)
-
         {
             var prompt = AnsiConsole.Prompt(
                 new TextPrompt<string>("Votre question ? ('bye' pour terminer)"));
@@ -52,7 +51,7 @@ public static class UseAiWithSseServer
             var result = await client.GetResponseAsync(prompt, new()
             {
                 Tools = [.. tools],
-                Temperature = (float?)0
+                Temperature = 0
             });
 
             // Réception des messages de l'IA et des outils
@@ -101,6 +100,7 @@ public static class UseAiWithSseServer
                         return ValueTask.CompletedTask;
                     })
                 ]
+                
             }
         };
     }
