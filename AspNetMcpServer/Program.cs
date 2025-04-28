@@ -1,17 +1,9 @@
 using AspNetMcpServer;
-using ModelContextProtocol.Protocol.Types;
-using ModelContextProtocol.Server;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddMcpServer()
     .WithHttpTransport()
-    .WithSetLoggingLevelHandler(Handler)
     .WithTools<DedevdevNetTool>();
-
-ValueTask<EmptyResult> Handler(RequestContext<SetLevelRequestParams> arg1, CancellationToken arg2)
-{
-    throw new NotImplementedException();
-}
 
 builder.Services.AddSingleton(_ =>
 {
@@ -27,6 +19,8 @@ app.Run();
 
 
 //var mcpServerBuilder = builder.Services.AddMcpServer()
+
+// https://www.strathweb.com/2024/07/built-in-support-for-server-sent-events-in-net-9/
 //    .WithHttpTransport(httpTransportOptions =>
 //    {
 //        httpTransportOptions.RunSessionHandler = (httpContext, mcpServer, cancellationToken) =>
