@@ -1,5 +1,6 @@
 using System.Text.Json;
 using Microsoft.Net.Http.Headers;
+using SseWebApi;
 
 var builder = WebApplication.CreateSlimBuilder(args);
 
@@ -38,8 +39,3 @@ app.MapGet("/sse", async (HttpContext ctx, string? action) =>
 
 
 app.Run();
-
-
-
-public record SseResponse(DateTime Date, string Action, decimal Value);
-
