@@ -6,7 +6,7 @@
         xmlns:sseWpfClient="clr-namespace:SseWpfClient"
         mc:Ignorable="d"
         WindowStartupLocation="CenterScreen"
-        Title="{Binding Title}" Height="240" Width="320"
+        Title="SseClient" Height="240" Width="320"
         d:DataContext="{d:DesignInstance Type=sseWpfClient:MainWindowViewModel, IsDesignTimeCreatable=True}"
 >
 

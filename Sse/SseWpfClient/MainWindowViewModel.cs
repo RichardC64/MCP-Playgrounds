@@ -10,7 +10,6 @@ namespace SseWpfClient
     {
         private CancellationTokenSource? _cancellationTokenSource;
 
-        public string Title => "SseWpfClient";
         public IEnumerable<string> Actions { get; set; }= ["MSFT", "AAPL", "TSLA"];
 
         [ObservableProperty] public partial string SelectedAction { get; set; } = "MSFT";

@@ -32,7 +32,6 @@ app.MapGet("/sse", async (HttpContext ctx, string? action) =>
         await ctx.Response.WriteAsync($"event: info\ndata: {JsonSerializer.Serialize(response, JsonSerializerOptions.Web)}\n\n");
         await ctx.Response.Body.FlushAsync();
 
-        // some artificial delay to not overwhelm the client
         await Task.Delay(2000);
     }
 });
