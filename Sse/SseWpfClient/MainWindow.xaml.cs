@@ -1,14 +1,9 @@
-﻿namespace SseWpfClient
+﻿namespace SseWpfClient;
+
+public partial class MainWindow
 {
-
-    public partial class MainWindow
+    public MainWindow()
     {
-        public MainWindow()
-        {
-            InitializeComponent();
-            DataContext = new MainWindowViewModel();
-        }
-
-
+        InitializeComponent();
     }
 }
