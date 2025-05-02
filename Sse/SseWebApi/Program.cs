@@ -2,7 +2,7 @@ using System.Text.Json;
 using Microsoft.Net.Http.Headers;
 using SseWebApi;
 
-var builder = WebApplication.CreateSlimBuilder(args);
+var builder = WebApplication.CreateBuilder(args);
 // Juste pour permettre la demo javascript
 builder.Services.AddCors(options =>
 {
@@ -15,12 +15,14 @@ builder.Services.AddCors(options =>
 });
 
 var app = builder.Build();
+app.UseHttpsRedirection();
 
 // Middleware pour servir des fichiers statiques
 app.UseStaticFiles();
 
 // Juste pour permettre la demo javascript
 app.UseCors("AllowAll");
+
 
 // Redirige la racine vers home.html
 app.MapGet("/", async ctx =>
