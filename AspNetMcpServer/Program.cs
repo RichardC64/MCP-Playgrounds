@@ -5,6 +5,7 @@ builder.Services.AddMcpServer()
     .WithHttpTransport()
     .WithTools<DedevdevNetTool>();
 
+
 builder.Services.AddSingleton(_ =>
 {
     var client = new HttpClient { BaseAddress = new Uri("https://devdevdev.net") };

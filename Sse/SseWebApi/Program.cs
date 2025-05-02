@@ -3,8 +3,30 @@ using Microsoft.Net.Http.Headers;
 using SseWebApi;
 
 var builder = WebApplication.CreateSlimBuilder(args);
+// Juste pour permettre la demo javascript
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowAll", policy =>
+    {
+        policy.AllowAnyOrigin()
+            .AllowAnyMethod()
+            .AllowAnyHeader();
+    });
+});
 
 var app = builder.Build();
+
+// Middleware pour servir des fichiers statiques
+app.UseStaticFiles();
+
+// Juste pour permettre la demo javascript
+app.UseCors("AllowAll");
+
+// Redirige la racine vers home.html
+app.MapGet("/", async ctx =>
+{
+    ctx.Response.Redirect("/home.html");
+});
 
 app.MapGet("/sse", async (HttpContext ctx, string? action) =>
 {
