@@ -24,6 +24,13 @@
             console.log(evtSource.readyState);
         };
 
+        // si non typé :
+        //evtSource.onmessage = (event => {
+        //    console.log("Message reçu :", event.data);
+        //    document.getElementById("messages").innerText = event.data;
+        //});
+
+        // messages typés :
         evtSource.addEventListener("info", (event) => {
             console.log("Message de type info reçu :", event.data);
             document.getElementById("messages").innerText = event.data;
