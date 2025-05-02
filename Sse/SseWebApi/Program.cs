@@ -3,33 +3,16 @@ using Microsoft.Net.Http.Headers;
 using SseWebApi;
 
 var builder = WebApplication.CreateBuilder(args);
-// Juste pour permettre la demo javascript
-builder.Services.AddCors(options =>
-{
-    options.AddPolicy("AllowAll", policy =>
-    {
-        policy.AllowAnyOrigin()
-            .AllowAnyMethod()
-            .AllowAnyHeader();
-    });
-});
 
 var app = builder.Build();
 app.UseHttpsRedirection();
-
-// Middleware pour servir des fichiers statiques
 app.UseStaticFiles();
-
-// Juste pour permettre la demo javascript
-app.UseCors("AllowAll");
-
 
 // Redirige la racine vers home.html
 app.MapGet("/", async ctx =>
 {
     ctx.Response.Redirect("/home.html");
 });
-
 app.MapGet("/sse", async (HttpContext ctx, string? action) =>
 {
     ctx.Response.Headers.Append(HeaderNames.ContentType, "text/event-stream");
@@ -60,6 +43,5 @@ app.MapGet("/sse", async (HttpContext ctx, string? action) =>
         await Task.Delay(1000);
     }
 });
-
 
 app.Run();
