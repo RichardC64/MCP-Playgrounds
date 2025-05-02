@@ -22,17 +22,17 @@
         evtSource.onopen = () => {
             console.log("Connecté au serveur : " + evtSource.readyState);
             console.log(evtSource.readyState);
-
-        evtSource.onmessage = (event) => {
-            console.log("Message reçu :", event.data);
-            document.getElementById("messages").innerText = event.data;
         };
+
+        evtSource.addEventListener("info", (event) => {
+            console.log("Message de type info reçu :", event.data);
+            document.getElementById("messages").innerText = event.data;
+        });
 
         evtSource.onerror = (event) => {
             console.error("Erreur de connexion SSE: ", event);
             document.getElementById("error").innerText = event.data;
-            };
-        }
+        };
 
         document.getElementById("stop").onclick = function () {
             evtSource.close();
