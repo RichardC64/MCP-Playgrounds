@@ -34,7 +34,9 @@ public static class UseAiWithSseServer
         var transportOptions = new SseClientTransportOptions
         {
             Name = "myaspnetServer",
-            Endpoint = new Uri("http://localhost:5261/sse")
+            Endpoint = new Uri("http://localhost:5261/sse"),
+           // UseStreamableHttp = true, sera dispo en v12
+
         };
 
         var mcpClient = await McpClientFactory.CreateAsync(new SseClientTransport(transportOptions), CreateOptions(), loggerFactory);
@@ -99,7 +101,8 @@ public static class UseAiWithSseServer
                         AnsiConsole.MarkupLine($"[red]Received notification: {message}[/]");
                         return ValueTask.CompletedTask;
                     })
-                ]
+                ],
+                
                 
             }
         };
