@@ -40,6 +40,7 @@ public static class UseAiWithSseServer
         };
 
         var mcpClient = await McpClientFactory.CreateAsync(new SseClientTransport(transportOptions), CreateOptions(), loggerFactory);
+        await mcpClient.SetLoggingLevel(LogLevel.Trace);
         var tools = await mcpClient.ListToolsAsync().ConfigureAwait(false);
 
         while (true)
