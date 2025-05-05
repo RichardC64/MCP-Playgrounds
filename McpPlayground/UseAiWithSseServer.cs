@@ -29,18 +29,19 @@ public static class UseAiWithSseServer
         using var client = new ChatClientBuilder(ollamaClient)
             .UseFunctionInvocation()
             .UseLogging(loggerFactory)
+            
             .Build();
 
         var transportOptions = new SseClientTransportOptions
         {
             Name = "myaspnetServer",
             Endpoint = new Uri("http://localhost:5261/sse"),
-           // UseStreamableHttp = true, sera dispo en v12
+           // UseStreamableHttp = true, sera dispo en v12, retirer /see au endpoint dans ce cas
 
         };
 
         var mcpClient = await McpClientFactory.CreateAsync(new SseClientTransport(transportOptions), CreateOptions(), loggerFactory);
-        await mcpClient.SetLoggingLevel(LogLevel.Trace);
+
         var tools = await mcpClient.ListToolsAsync().ConfigureAwait(false);
 
         while (true)
@@ -51,42 +52,73 @@ public static class UseAiWithSseServer
             if (string.Equals("bye", prompt, StringComparison.InvariantCultureIgnoreCase))
                 break;
 
-            var result = await client.GetResponseAsync(prompt, new()
+            var cts = new CancellationTokenSource();
+            var cancellationToken = cts.Token;
+            var task = client.GetStreamingResponseAsync(prompt, new() { Tools = [.. tools] }, cancellationToken);
+            try
             {
-                Tools = [.. tools],
-                Temperature = 0
-            });
-
-            // Réception des messages de l'IA et des outils
-            foreach (var resultMessage in result.Messages)
-            {
-                if (resultMessage.Role == ChatRole.Tool)
+                await foreach (var update in task)
                 {
-                    AnsiConsole.MarkupLine($"[blue]Réponse de l'outil[/]");
-                    if (resultMessage.Contents.FirstOrDefault() is not FunctionResultContent
-                        {
-                            Result: JsonElement jsonElement
-                        }) continue;
-                    Console.WriteLine(jsonElement.GetProperty("content").EnumerateArray().FirstOrDefault().GetProperty("text").ToString());
-                }
-                else if (resultMessage.Role == ChatRole.Assistant)
-                {
-                    switch (resultMessage.Contents.FirstOrDefault())
+                    if (update.Role == ChatRole.Tool)
                     {
-                        case FunctionCallContent functionCallContent:
-                            AnsiConsole.MarkupLine("[yellow]Appel de l'outil[/]");
-                            Console.WriteLine($"Outil : {functionCallContent.Name}, Argument : {functionCallContent.Arguments?.Values.First()}");
-                            break;
-                        case TextContent textContent:
-                            AnsiConsole.MarkupLine("[yellow]Reformulation par l'IA[/]");
-                            Console.WriteLine($"{textContent.Text}");
-                            break;
+                        WriteToolAnswer(update);
+                    }
+                    else if (update.Role == ChatRole.Assistant)
+                    {
+                        switch (update.Contents.FirstOrDefault())
+                        {
+                            case FunctionCallContent functionCallContent:
+                                await ManageToolCall(functionCallContent, update, cts);
+                                break;
+                            case TextContent textContent:
+                                WriteFinalAnswer(textContent);
+                                break;
+                        }
                     }
                 }
+            }
+            catch (OperationCanceledException e)
+            {
+                Console.WriteLine("L'appel à l'outil a été annulé");
             }
         }
 
         await mcpClient.DisposeAsync();
+    }
+
+    private static async Task ManageToolCall(FunctionCallContent functionCallContent, ChatResponseUpdate update,
+        CancellationTokenSource cts)
+    {
+        AnsiConsole.MarkupLine("[yellow]Appel de l'outil[/]");
+       // Demander confirmation à l'utilisateur
+        var confirmation = AnsiConsole.Confirm(
+            $"L'outil {functionCallContent.Name} va être appelé avec l'argument {functionCallContent.Arguments?.Values.First()}. Voulez-vous l'autoriser ?");
+        if (!confirmation)
+        {
+            AnsiConsole.MarkupLine("[red]Appel à l'outil annulé par l'utilisateur.[/]");
+            update.FinishReason = ChatFinishReason.ToolCalls;
+            await cts.CancelAsync();
+            return;
+        }
+
+        AnsiConsole.MarkupLine("[green]Appel à l'outil autorisé.[/]");
+    }
+
+    private static void WriteFinalAnswer(TextContent textContent)
+    {
+        AnsiConsole.MarkupLine("[yellow]Reformulation par l'IA[/]");
+        Console.WriteLine($"{textContent.Text}");
+    }
+
+    private static void WriteToolAnswer(ChatResponseUpdate update)
+    {
+        AnsiConsole.MarkupLine($"[blue]Réponse de l'outil[/]");
+        if (update.Contents.FirstOrDefault() is not FunctionResultContent
+            {
+                Result: JsonElement jsonElement
+            }) return;
+        Console.WriteLine(jsonElement.GetProperty("content").EnumerateArray().FirstOrDefault()
+            .GetProperty("text").ToString());
     }
 
     private static McpClientOptions CreateOptions()

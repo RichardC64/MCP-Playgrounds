@@ -28,9 +28,31 @@ public static class SseHandler
                     break;
             }
 
-            var response = new SseResponse(DateTime.Now, action, value);
+            var response = new MySseResponse(DateTime.Now, action, value);
 
+            /*
             // la réponse doit être au format : event: <event-name>\ndata: <data>\n\n ou data: <data>\n\n
+            // exemple :
+            // event: info\ndata: {"date":"2025-05-02T09:55:23.2961256+02:00","action":"MSFT","value":310}\n\n
+            // avec MCP, le format est du JsonRPC soit un appel du client au format :
+            // {
+            //    "jsonrpc": "2.0",
+            //    "method": "nomDeLaMéthode",
+            //    "params": ["param1", "param2"],
+            //    "id": 4
+            // }
+
+            // et la réponse du serveur au format :
+            // {
+            //    "jsonrpc": "2.0",
+            //    "result": {
+            //        "date": "2025-05-02T09:55:23.2961256+02:00",
+            //        "action": "MSFT",
+            //        "value": 310
+            // },
+            //    "id": 4
+            */
+
             await ctx.Response.WriteAsync($"event: info\ndata: {JsonSerializer.Serialize(response, JsonSerializerOptions.Web)}\n\n");
             await ctx.Response.Body.FlushAsync();
 
