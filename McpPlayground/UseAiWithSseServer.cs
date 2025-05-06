@@ -53,8 +53,7 @@ public static class UseAiWithSseServer
                 break;
 
             var cts = new CancellationTokenSource();
-            var cancellationToken = cts.Token;
-            var task = client.GetStreamingResponseAsync(prompt, new() { Tools = [.. tools] }, cancellationToken);
+            var task = client.GetStreamingResponseAsync(prompt, new() { Tools = [.. tools] }, cts.Token);
             try
             {
                 await foreach (var update in task)
@@ -96,7 +95,6 @@ public static class UseAiWithSseServer
         if (!confirmation)
         {
             AnsiConsole.MarkupLine("[red]Appel à l'outil annulé par l'utilisateur.[/]");
-            update.FinishReason = ChatFinishReason.ToolCalls;
             await cts.CancelAsync();
             return;
         }
