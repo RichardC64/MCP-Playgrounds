@@ -9,7 +9,7 @@ Log.Logger = new LoggerConfiguration()
 
 Log.Information("Start Client");
 
-var tools = new[] { nameof(UseMcpPlaygroundServer), nameof(UseMcpPlaygroundServerComplexDatas), nameof(UseAiTownVilleServer), nameof(UseAiWithSseServer), nameof(UsePlaywrightServer) };
+var tools = new[] { nameof(UseMcpSQLServer), nameof(UseMcpPlaygroundServer), nameof(UseMcpPlaygroundServerComplexDatas), nameof(UseAiTownVilleServer), nameof(UseAiWithSseServer), nameof(UsePlaywrightServer) };
 var tool = AnsiConsole.Prompt(
     new SelectionPrompt<string>()
         .Title("[green]Choisissez votre outil :[/]")
@@ -20,6 +20,9 @@ AnsiConsole.MarkupLine($"[green]Invocation de {tool}...[/]");
 
 switch (tool)
 {
+    case nameof(UseMcpSQLServer):
+        await UseMcpSQLServer.ExecuteAsync();
+        break;
     case nameof(UseMcpPlaygroundServer):
         await UseMcpPlaygroundServer.ExecuteAsync();
         break;
