@@ -43,7 +43,6 @@ public static class UseAiWithSseServer
         var mcpClient = await McpClientFactory.CreateAsync(new SseClientTransport(transportOptions), CreateOptions(), loggerFactory);
 
         var tools = await mcpClient.ListToolsAsync().ConfigureAwait(false);
-
         while (true)
         {
             var prompt = AnsiConsole.Prompt(
@@ -89,7 +88,7 @@ public static class UseAiWithSseServer
         CancellationTokenSource cts)
     {
         AnsiConsole.MarkupLine("[yellow]Appel de l'outil[/]");
-       // Demander confirmation à l'utilisateur
+        // Demander confirmation à l'utilisateur
         var confirmation = AnsiConsole.Confirm(
             $"L'outil {functionCallContent.Name} va être appelé avec l'argument {functionCallContent.Arguments?.Values.First()}. Voulez-vous l'autoriser ?");
         if (!confirmation)
