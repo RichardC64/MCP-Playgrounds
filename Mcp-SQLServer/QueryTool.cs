@@ -8,11 +8,10 @@ namespace Mcp_SQLServer;
 public class QueryTool
 {
     [McpServerTool(Name = "query"), Description("Run a read-only SQL query on Microsoft SQL SERVER")]
-    public async Task<string> ExecuteQuery(ILogger logger, string sql)
+    public async Task<string> ExecuteQuery(SqlServerResourcesProvider sqlServerResourcesProvider, ILogger logger, string sql)
     {
         logger.Information($"Run {nameof(QueryTool)}/{nameof(ExecuteQuery)} for {sql}");
-        var q = new SqlServerResourcesProvider();
-        return await q.ExecuteQueryAsync(sql, CancellationToken.None);
+        return await sqlServerResourcesProvider.ExecuteQueryAsync(sql, CancellationToken.None);
     }
 
 

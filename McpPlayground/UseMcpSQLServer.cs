@@ -36,7 +36,7 @@ public static class UseMcpSQLServer
         {
             Name = "myserver",
             Command = "dotnet",
-            Arguments = ["run", "--project", @"..\..\..\..\Mcp-SQLServer", "--no-build"]
+            Arguments = ["run", "--project", @"..\..\..\..\Mcp-SQLServer", "--no-build", "--", "Server=(local);Database=TropheeRhune;Trusted_Connection=True;TrustServerCertificate=true"]
         };
 
         await using var mcpClient = await McpClientFactory.CreateAsync(new StdioClientTransport(transportOptions), null, loggerFactory);

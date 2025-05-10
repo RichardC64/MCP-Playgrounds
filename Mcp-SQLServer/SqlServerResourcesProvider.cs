@@ -6,12 +6,12 @@ using Serilog;
 
 namespace Mcp_SQLServer;
 
-public class SqlServerResourcesProvider
+public class SqlServerResourcesProvider(string connectionString)
 {
+
     public async Task<ListResourcesResult> GetTablesAsync(CancellationToken cancellationToken)
     {
         var resources = new List<Resource>();
-        var connectionString = "Server=(local);Database=TropheeRhune;Trusted_Connection=True;TrustServerCertificate=true";
 
         var sql = """
                   SELECT TABLE_NAME
@@ -42,7 +42,6 @@ public class SqlServerResourcesProvider
 
     public async Task<ReadResourceResult> GetColumnsAsync(string tableName, CancellationToken cancellationToken)
     {
-        var connectionString = "Server=(local);Database=TropheeRhune;Trusted_Connection=True;TrustServerCertificate=true";
         var sql = $"""
                    SELECT COLUMN_NAME as ColumnName, DATA_TYPE as DataType
                    FROM INFORMATION_SCHEMA.COLUMNS
@@ -70,7 +69,6 @@ public class SqlServerResourcesProvider
                {sql.Trim()}
                """;
         Log.Information($"Execute Query1: {sql}");
-        var connectionString = "Server=(local);Database=TropheeRhune;Trusted_Connection=True;TrustServerCertificate=true";
         await using var connection = new SqlConnection(connectionString);
         try
         {

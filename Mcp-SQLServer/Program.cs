@@ -1,20 +1,26 @@
-﻿using System.Text.Json;
-using System.Text.Json.Serialization;
-using Mcp_SQLServer;
+﻿using Mcp_SQLServer;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using ModelContextProtocol;
 using ModelContextProtocol.Protocol.Types;
 using Serilog;
 
+
 var builder = Host.CreateApplicationBuilder(args);
 
-Log.Information("Start server...");
+// try to retrieve first argument from args
+var connectionString = args.Length > 0 ? args[0] : null;
+if (connectionString is null)
+{
+    Console.WriteLine("Missing required argument 'connectionString'");
+    return 1;
+}
 builder.Services.AddSerilog(configure =>
 {
     configure.MinimumLevel.Verbose();
     configure.WriteTo.File("logs/server_log.txt", rollingInterval: RollingInterval.Day);
 });
+builder.Services.AddSingleton<SqlServerResourcesProvider>(_ => new SqlServerResourcesProvider(connectionString));
 
 var _minimumLoggingLevel = LoggingLevel.Debug;
 
@@ -40,7 +46,10 @@ builder.Services
     .WithStdioServerTransport()
     .WithListResourcesHandler(async (ctx, ct) =>
     {
-        return await new SqlServerResourcesProvider().GetTablesAsync(ct);
+        var sqlServerResourcesProvider = ctx.Server.Services?.GetService<SqlServerResourcesProvider>();
+        if (sqlServerResourcesProvider is null)
+            throw new McpException("SqlServerResourcesProvider not found", McpErrorCode.InternalError);
+        return await sqlServerResourcesProvider.GetTablesAsync(ct);
     })
     .WithReadResourceHandler(async (ctx, ct) =>
     {
@@ -56,17 +65,21 @@ builder.Services
             throw new McpException($"Invalid uri: {uri}", McpErrorCode.InvalidParams);
         }
         var tableName = uri.Substring("test://".Length);
-        return await new SqlServerResourcesProvider().GetColumnsAsync(tableName, ct);
+
+        var sqlServerResourcesProvider = ctx.Server.Services?.GetService<SqlServerResourcesProvider>();
+        if (sqlServerResourcesProvider is null)
+            throw new McpException("SqlServerResourcesProvider not found", McpErrorCode.InternalError);
+
+        return await sqlServerResourcesProvider.GetColumnsAsync(tableName, ct);
     })
     .WithToolsFromAssembly();
 
+
 builder.Services.AddSingleton<Func<LoggingLevel>>(_ => () => _minimumLoggingLevel);
 
-//resources: result.rows.map((row) => ({
-//    uri: new URL(`${ row.table_name } /${ SCHEMA_PATH}`, resourceBaseUrl).href,
-//    mimeType: "application/json",
-//    name: `"${row.table_name}" database schema`,
-//})),
+var host = builder.Build();
 
+Log.Information("Start server connected to {connectionString}...", connectionString);
+await host.RunAsync();
 
-await builder.Build().RunAsync();
+return 0;
