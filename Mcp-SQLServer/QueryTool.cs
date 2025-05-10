@@ -7,7 +7,7 @@ namespace Mcp_SQLServer;
 [McpServerToolType]
 public class QueryTool
 {
-    [McpServerTool(Name = "query"), Description("Run a read-only SQL query")]
+    [McpServerTool(Name = "query"), Description("Run a read-only SQL query on Microsoft SQL SERVER")]
     public async Task<string> ExecuteQuery(ILogger logger, string sql)
     {
         logger.Information($"Run {nameof(QueryTool)}/{nameof(ExecuteQuery)} for {sql}");

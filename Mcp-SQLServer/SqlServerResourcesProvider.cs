@@ -4,34 +4,34 @@ using Microsoft.Data.SqlClient;
 using ModelContextProtocol.Protocol.Types;
 using Serilog;
 
+namespace Mcp_SQLServer;
+
 public class SqlServerResourcesProvider
 {
     public async Task<ListResourcesResult> GetTablesAsync(CancellationToken cancellationToken)
     {
         var resources = new List<Resource>();
-        var connectionString = "Server=localhost;Database=TropheeRhune;Trusted_Connection=True;";
+        var connectionString = "Server=(local);Database=TropheeRhune;Trusted_Connection=True;TrustServerCertificate=true";
 
         var sql = """
-                  USE TropheeRhune; 
-                  GO
-
                   SELECT TABLE_NAME
                   FROM INFORMATION_SCHEMA.TABLES
-                  WHERE TABLE_TYPE = 'BASE TABLE'
+                  WHERE TABLE_TYPE = 'BASE TABLE';
                   """;
 
         await using var connection = new SqlConnection(connectionString);
 
-        var r =await connection.QueryAsync<string>(sql);
-        foreach (var row in r)
+        var tables = await connection.QueryAsync<string>(sql);
+        foreach (var table in tables)
         {
             resources.Add(new Resource
             {
-                Name = $"\"{row}\" database schema",
+                Name = $"\"{table}\" database schema",
+                Description = $"Table \"{table}\"",
                 MimeType = "application/json",
-                Uri = $"test://{row}"
+                Uri = $"test://{table}"
             });
-            Log.Information($"Table: {row}");
+            Log.Information($"Table: {table}");
         }
 
         return new ListResourcesResult
@@ -42,14 +42,12 @@ public class SqlServerResourcesProvider
 
     public async Task<ReadResourceResult> GetColumnsAsync(string tableName, CancellationToken cancellationToken)
     {
-        var connectionString = "Server=localhost;Database=TropheeRhune;Trusted_Connection=True;";
+        var connectionString = "Server=(local);Database=TropheeRhune;Trusted_Connection=True;TrustServerCertificate=true";
         var sql = $"""
-                  USE TropheeRhune; 
-                  GO
-                  SELECT COLUMN_NAME as ColumnName, DATA_TYPE s DataType
-                  FROM INFORMATION_SCHEMA.COLUMNS
-                  WHERE TABLE_NAME = '{tableName}' AND TABLE_SCHEMA = 'dbo'
-                  """;
+                   SELECT COLUMN_NAME as ColumnName, DATA_TYPE as DataType
+                   FROM INFORMATION_SCHEMA.COLUMNS
+                   WHERE TABLE_NAME = '{tableName}' AND TABLE_SCHEMA = 'dbo';
+                   """;
         await using var connection = new SqlConnection(connectionString);
         var columns = await connection.QueryAsync<ColumnInfo>(sql);
         var textResourceContents = new TextResourceContents
@@ -61,7 +59,7 @@ public class SqlServerResourcesProvider
         Log.Information($"{textResourceContents.Text}");
         return new ReadResourceResult
         {
-            Contents =[textResourceContents]
+            Contents = [textResourceContents]
         };
     }
 
@@ -69,25 +67,23 @@ public class SqlServerResourcesProvider
     {
 
         sql = $"""
-               USE TropheeRhune
-               GO
                {sql.Trim()}
                """;
         Log.Information($"Execute Query1: {sql}");
-        var connectionString = "Server=localhost;Database=TropheeRhune;Trusted_Connection=True;";
+        var connectionString = "Server=(local);Database=TropheeRhune;Trusted_Connection=True;TrustServerCertificate=true";
         await using var connection = new SqlConnection(connectionString);
         try
         {
-var result = (await connection.QueryAsync(sql)).ToList();
-        Log.Information($"Execute Query: {result.Count}");
-        return JsonSerializer.Serialize(result);
+            var result = (await connection.QueryAsync(sql)).ToList();
+            Log.Information($"Execute Query: {result.Count}");
+            return JsonSerializer.Serialize(result);
         }
         catch (Exception e)
         {
             Log.Error(e.Message);
             throw;
         }
-        
+
     }
 }
 

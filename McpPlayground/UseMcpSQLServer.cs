@@ -5,6 +5,7 @@ using ModelContextProtocol.Protocol.Transport;
 using Serilog;
 using Spectre.Console;
 using System.Text.Json;
+using ModelContextProtocol.Protocol.Types;
 
 namespace McpPlayground;
 
@@ -29,7 +30,6 @@ public static class UseMcpSQLServer
         using var client = new ChatClientBuilder(ollamaClient)
             .UseFunctionInvocation()
             .UseLogging(loggerFactory)
-
             .Build();
 
         var transportOptions = new StdioClientTransportOptions
@@ -42,6 +42,15 @@ public static class UseMcpSQLServer
         await using var mcpClient = await McpClientFactory.CreateAsync(new StdioClientTransport(transportOptions), null, loggerFactory);
         var tools = await mcpClient.ListToolsAsync().ConfigureAwait(false);
 
+        var ressources = await mcpClient.ListResourcesAsync();
+
+        foreach (var ressource in ressources)
+        {
+            Console.WriteLine(ressource.Description);
+            var re = await mcpClient.ReadResourceAsync(ressource.Uri);
+                Console.WriteLine(JsonSerializer.Serialize(re.Contents));
+        }
+
         while (true)
         {
             var prompt = AnsiConsole.Prompt(
@@ -51,7 +60,11 @@ public static class UseMcpSQLServer
                 break;
 
             var cts = new CancellationTokenSource();
-            var task = client.GetStreamingResponseAsync(prompt, new() { Tools = [.. tools] }, cts.Token);
+            var task = client.GetStreamingResponseAsync(prompt, new()
+            {
+                Tools = [.. tools],
+                
+            }, cts.Token);
             try
             {
                 await foreach (var update in task)
@@ -65,7 +78,7 @@ public static class UseMcpSQLServer
                         switch (update.Contents.FirstOrDefault())
                         {
                             case FunctionCallContent functionCallContent:
-                                //await ManageToolCall(functionCallContent, update, cts);
+                                await ManageToolCall(functionCallContent, update, cts);
                                 break;
                             case TextContent textContent:
                                 WriteFinalAnswer(textContent);
@@ -79,10 +92,23 @@ public static class UseMcpSQLServer
                 Console.WriteLine("L'appel à l'outil a été annulé");
             }
         }
-
-        await mcpClient.DisposeAsync();
     }
+    private static async Task ManageToolCall(FunctionCallContent functionCallContent, ChatResponseUpdate update,
+        CancellationTokenSource cts)
+    {
+        AnsiConsole.MarkupLine("[yellow]Appel de l'outil[/]");
+        // Demander confirmation à l'utilisateur
+        var confirmation = AnsiConsole.Confirm(
+            $"L'outil {functionCallContent.Name} va être appelé avec l'argument {functionCallContent.Arguments?.Values.First()}. Voulez-vous l'autoriser ?");
+        if (!confirmation)
+        {
+            AnsiConsole.MarkupLine("[red]Appel à l'outil annulé par l'utilisateur.[/]");
+            await cts.CancelAsync();
+            return;
+        }
 
+        AnsiConsole.MarkupLine("[green]Appel à l'outil autorisé.[/]");
+    }
     private static void WriteFinalAnswer(TextContent textContent)
     {
         AnsiConsole.MarkupLine("[yellow]Reformulation par l'IA[/]");
