@@ -5,7 +5,6 @@ using ModelContextProtocol.Client;
 using ModelContextProtocol.Protocol.Transport;
 using Spectre.Console;
 using Serilog;
-
 namespace McpPlayground;
 
 public static class UseAiTownVilleServer
@@ -24,12 +23,14 @@ public static class UseAiTownVilleServer
         using var httpClient = new HttpClient();
 #endif
 
-        using IChatClient ollamaClient = (new OllamaChatClient("http://localhost:11434/", "llama3.1", httpClient));
+        
 
-        using var client = new ChatClientBuilder(ollamaClient)
+        using var client = new OllamaChatClient("http://localhost:11434/", "llama3.1", httpClient)
+            .AsBuilder()
             .UseFunctionInvocation()
             .UseLogging(loggerFactory)
             .Build();
+
 
         var transportOptions = new StdioClientTransportOptions
         {

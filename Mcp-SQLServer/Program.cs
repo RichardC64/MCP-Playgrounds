@@ -20,7 +20,9 @@ builder.Services.AddSerilog(configure =>
     configure.MinimumLevel.Verbose();
     configure.WriteTo.File("logs/server_log.txt", rollingInterval: RollingInterval.Day);
 });
-builder.Services.AddSingleton<SqlServerResourcesProvider>(_ => new SqlServerResourcesProvider(connectionString));
+
+builder.Services.AddSingleton(_ => new SqlServerResourcesProvider(connectionString));
+builder.Services.AddSingleton<SqlServerResources>();
 
 var _minimumLoggingLevel = LoggingLevel.Debug;
 
@@ -44,12 +46,18 @@ builder.Services
         return new EmptyResult();
     })
     .WithStdioServerTransport()
-    .WithListResourcesHandler(async (ctx, ct) =>
+    .WithPrompts<DbDescriptionPromptType>()
+    .WithListResourcesHandler(async (ctx, _) =>
     {
-        var sqlServerResourcesProvider = ctx.Server.Services?.GetService<SqlServerResourcesProvider>();
-        if (sqlServerResourcesProvider is null)
-            throw new McpException("SqlServerResourcesProvider not found", McpErrorCode.InternalError);
-        return await sqlServerResourcesProvider.GetTablesAsync(ct);
+        var sqlServerResourcesProvider = ctx.Server.Services!.GetService<SqlServerResources>()!;
+
+        var resources = await sqlServerResourcesProvider.TablesResources();
+        
+        return new ListResourcesResult
+        {
+            Resources = resources
+        };
+
     })
     .WithReadResourceHandler(async (ctx, ct) =>
     {
@@ -60,18 +68,23 @@ builder.Services
             throw new McpException("Missing required argument 'uri'", McpErrorCode.InvalidParams);
         }
         // check if uri is valid
-        if (!uri.StartsWith("test://"))
+        if (!uri.StartsWith("sqlserver://db/tables/"))
         {
             throw new McpException($"Invalid uri: {uri}", McpErrorCode.InvalidParams);
         }
-        var tableName = uri.Substring("test://".Length);
+        var tableName = uri.Substring("sqlserver://db/tables/".Length);
 
-        var sqlServerResourcesProvider = ctx.Server.Services?.GetService<SqlServerResourcesProvider>();
-        if (sqlServerResourcesProvider is null)
-            throw new McpException("SqlServerResourcesProvider not found", McpErrorCode.InternalError);
+        var sqlServerResourcesProvider = ctx.Server.Services!.GetService<SqlServerResources>()!;
 
-        return await sqlServerResourcesProvider.GetColumnsAsync(tableName, ct);
+        var result = await sqlServerResourcesProvider.TableResource(tableName);
+        return new ReadResourceResult
+        {
+            Contents =  { result }
+        };
+
     })
+
+    
     .WithToolsFromAssembly();
 
 

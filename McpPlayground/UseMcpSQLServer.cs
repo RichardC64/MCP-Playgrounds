@@ -5,6 +5,7 @@ using ModelContextProtocol.Protocol.Transport;
 using Serilog;
 using Spectre.Console;
 using System.Text.Json;
+using Mcp_SQLServer;
 using ModelContextProtocol.Protocol.Types;
 
 namespace McpPlayground;
@@ -25,9 +26,8 @@ public static class UseMcpSQLServer
         using var httpClient = new HttpClient();
 #endif
 
-        using IChatClient ollamaClient = (new OllamaChatClient("http://localhost:11434/", "llama3.1", httpClient));
-
-        using var client = new ChatClientBuilder(ollamaClient)
+        using var client = new OllamaChatClient("http://localhost:11434/", "llama3.1", httpClient)
+            .AsBuilder()
             .UseFunctionInvocation()
             .UseLogging(loggerFactory)
             .Build();
@@ -36,19 +36,58 @@ public static class UseMcpSQLServer
         {
             Name = "myserver",
             Command = "dotnet",
-            Arguments = ["run", "--project", @"..\..\..\..\Mcp-SQLServer", "--no-build", "--", "Server=(local);Database=TropheeRhune;Trusted_Connection=True;TrustServerCertificate=true"]
+            Arguments = ["run", "--project", @"..\..\..\..\Mcp-SQLServer", "--", "Server=(local);Database=TropheeRhune;Trusted_Connection=True;TrustServerCertificate=true"]
         };
+
+        // en mode release, ajouter l'argument --no-build
 
         await using var mcpClient = await McpClientFactory.CreateAsync(new StdioClientTransport(transportOptions), null, loggerFactory);
         var tools = await mcpClient.ListToolsAsync().ConfigureAwait(false);
 
+        // Resources
         var ressources = await mcpClient.ListResourcesAsync();
 
         foreach (var ressource in ressources)
         {
-            Console.WriteLine(ressource.Description);
-            var re = await mcpClient.ReadResourceAsync(ressource.Uri);
-                Console.WriteLine(JsonSerializer.Serialize(re.Contents));
+            AnsiConsole.MarkupLine($"[Blue]{ressource.Name}[/]");
+            AnsiConsole.WriteLine($"{ressource.Description}");
+            var res = await mcpClient.ReadResourceAsync(ressource.Uri).ConfigureAwait(false);
+            var re = res.Contents.FirstOrDefault() as TextResourceContents;
+
+            if (re?.Text != null)
+            {
+                var table = new Table();
+
+                table.AddColumn("Nom");
+                table.AddColumn("Type");
+                table.AddColumn("Description");
+
+                var columnInfos =  JsonSerializer.Deserialize<IEnumerable<ColumnInfo>>(re.Text);
+                if (columnInfos == null) continue;
+                foreach (var columnInfo in columnInfos)
+                {
+                    table.AddRow(columnInfo.ColumnName, columnInfo.DataType, columnInfo.Description);
+                }
+
+                AnsiConsole.Write(table);
+            }
+        }
+        // prompts
+        var prompts = await mcpClient.ListPromptsAsync().ConfigureAwait(false);
+
+        var messages = new List<ChatMessage>();
+        foreach (var prompt in prompts)
+        {
+            AnsiConsole.MarkupLine($"[Blue]{prompt.Name}[/]");
+            AnsiConsole.WriteLine($"{prompt.Description}");
+            AnsiConsole.WriteLine($"{prompt.ProtocolPrompt.Name}");
+
+            var pt = await mcpClient.GetPromptAsync(prompt.Name);
+            foreach (var promptMessage in pt.Messages)
+            {
+                Console.WriteLine($"{promptMessage.Role} : {promptMessage.Content.Text}");
+                messages.Add(new ChatMessage( promptMessage.Role == Role.Assistant ? ChatRole.Assistant : ChatRole.User, promptMessage.Content.Text));
+            }
         }
 
         while (true)
@@ -60,7 +99,10 @@ public static class UseMcpSQLServer
                 break;
 
             var cts = new CancellationTokenSource();
-            var task = client.GetStreamingResponseAsync(prompt, new()
+            // add messages to the prompt
+            messages.Add(new ChatMessage(ChatRole.User, prompt));
+
+            var task = client.GetStreamingResponseAsync(messages, new()
             {
                 Tools = [.. tools],
                 
