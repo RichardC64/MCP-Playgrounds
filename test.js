@@ -8,7 +8,7 @@ export let options = {
 
 
 export default function () {
-    const payload = JSON.stringify({ model: "llama3.1", prompt: "Décrit Microsoft en une phrase" });
+    const payload = JSON.stringify({ model: "mistral", prompt: "Décrit Microsoft en une phrase" });
     const params = { headers: { 'Content-Type': 'application/json' } };
     http.post('http://host.docker.internal:11434/api/generate', payload, params);
     sleep(1);
