@@ -1,5 +1,6 @@
 ﻿public enum Uses
 {
     FoundryOllama,
-    UseFunction
+    UseFunction,
+    UseEmbeddings
 }

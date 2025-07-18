@@ -11,7 +11,7 @@
 
   <ItemGroup>
     <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
-    <PackageReference Include="System.Net.ServerSentEvents" Version="9.0.4" />
+    <PackageReference Include="System.Net.ServerSentEvents" Version="10.0.0-preview.6.25358.103" />
   </ItemGroup>
 
 </Project>
