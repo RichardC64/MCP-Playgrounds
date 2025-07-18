@@ -1,49 +1,70 @@
-﻿using Microsoft.Extensions.AI;
+﻿using Microsoft.AI.Foundry.Local;
+using Microsoft.Extensions.AI;
 using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.ChatCompletion;
+using Microsoft.SemanticKernel.Connectors.Onnx;
 using Qdrant.Client;
 using Qdrant.Client.Grpc;
+using Spectre.Console;
 
 namespace FoundryLocalPlayground;
 
 public class UseEmbeddings : IUse
 {
+    private readonly string _alias = "qwen2.5-0.5b";
+    private readonly string _embeddModelPath = "c:\\LlmCache\\jina-embeddings-v2-base-en\\model.onnx";
+    private readonly string _embedVocab = "c:\\LlmCache\\jina-embeddings-v2-base-en\\vocab.txt";
+    // port 32770 et 32771 sont les ports par défaut de Qdrant dans Foundry Local avec mon Docker
+    private readonly string _qDrantGrpcPort = "32771";
+
+    private readonly string _docPath = "C:\\LlmCache\\jina-embeddings-v2-base-en\\doc.txt";
+    private readonly string _docId = "4";
+
+
+
     public async Task ExecuteAsync()
     {
-        // voir https://github.com/microsoft/Foundry-Local/tree/main/samples/dotNET/rag
+        AnsiConsole.MarkupLine("[green]Initialisation de Foundry Local[/]");
+        var manager = await FoundryLocalManager.StartModelAsync(_alias);
+        var model = await manager.GetModelInfoAsync(_alias);
+        if (model == null) throw new ArgumentException("Model non trouvé");
+
+        AnsiConsole.MarkupLine("[green]Initialisation de Semantic Kernel[/]");
+
+        // voir l'exemple NoteBook: https://github.com/microsoft/Foundry-Local/tree/main/samples/dotNET/rag
         var builder = Kernel.CreateBuilder();
-        var embeddModelPath = "Your Jinaai jina-embeddings-v2-base-en onnx model path";
-        var embedVocab = "Your Jinaai ina-embeddings-v2-base-en vocab file path";
-        builder.AddBertOnnxEmbeddingGenerator(embeddModelPath, embedVocab);
-        builder.AddOpenAIChatCompletion("qwen2.5-0.5b-instruct-generic-gpu", new Uri("http://localhost:5273/v1"), apiKey: "", serviceId: "qwen2.5-0.5b");
+
+        builder.AddBertOnnxEmbeddingGenerator(_embeddModelPath, _embedVocab);
+        builder.AddOpenAIChatCompletion(model.ModelId, endpoint: manager.Endpoint, apiKey: manager.ApiKey,serviceId: model.ModelId);
 
         var kernel = builder.Build();
 
-        var chatService = kernel.GetRequiredService<IChatCompletionService>(serviceKey: "qwen2.5-0.5b");
+        var chatService = kernel.GetRequiredService<IChatCompletionService>(model.ModelId);
         var embeddingService = kernel.GetRequiredService<IEmbeddingGenerator<string, Embedding<float>>>();
 
+        AnsiConsole.MarkupLine("[green]Initialisation de qDrant[/]");
         var vectorStoreService = new VectorStoreService(
-            "http://localhost:6334",
+            $"http://localhost:{_qDrantGrpcPort}",
             "",
             "demodocs");
 
         await vectorStoreService.InitializeAsync();
 
-
+        AnsiConsole.MarkupLine("[green]Ingestion...[/]");
         var documentIngestionService = new DocumentIngestionService(embeddingService, vectorStoreService);
         var ragQueryService = new RagQueryService(embeddingService, chatService, vectorStoreService);
 
-        var filePath = "./foundry-local-architecture.md";
-        var fileID = "3";
+        // ingestion du document
+        await documentIngestionService.IngestDocumentAsync(_docPath, _docId);
 
-        await documentIngestionService.IngestDocumentAsync(filePath, fileID);
-
-        var question = "What's Foundry Local?";
+        AnsiConsole.MarkupLine("[green]Interrogation[/]");
+        // interrogation du document
+        var question = "Qu'est-ce que Foundry Local?";
 
         var answer = await ragQueryService.QueryAsync(question);
 
         Console.WriteLine($"Question: {question}");
-        Console.WriteLine($"Answer: {answer}");
+        Console.WriteLine($"Réponse: {answer}");
     }
 }
 
@@ -104,31 +125,20 @@ public class VectorStoreService
     }
 }
 
-public class RagQueryService
+public class RagQueryService(
+    IEmbeddingGenerator<string, Embedding<float>> embeddingService,
+    IChatCompletionService chatService,
+    VectorStoreService vectorStoreService)
 {
-    private readonly IEmbeddingGenerator<string, Embedding<float>> _embeddingService;
-    private readonly IChatCompletionService _chatService;
-    private readonly VectorStoreService _vectorStoreService;
-
-    public RagQueryService(
-        IEmbeddingGenerator<string, Embedding<float>> embeddingService,
-        IChatCompletionService chatService,
-        VectorStoreService vectorStoreService)
-    {
-        _embeddingService = embeddingService;
-        _chatService = chatService;
-        _vectorStoreService = vectorStoreService;
-    }
-
     public async Task<string> QueryAsync(string question)
     {
         // return question; // For now, just return the question as a placeholder
-        var queryEmbeddingResult = await _embeddingService.GenerateAsync(question);
+        var queryEmbeddingResult = await embeddingService.GenerateAsync(question);
         //         Console.WriteLine(question);
         var queryEmbedding = queryEmbeddingResult.Vector;
-        var searchResults = await _vectorStoreService.SearchAsync(queryEmbedding, limit: 5);
+        var searchResults = await vectorStoreService.SearchAsync(queryEmbedding, limit: 5);
 
-        string str_context = "";
+        var str_context = "";
         foreach (var result in searchResults)
         {
             if (result.Payload.TryGetValue("text", out var text))
@@ -136,16 +146,16 @@ public class RagQueryService
                 str_context += text.ToString();
             }
         }
-        var prompt = $@"According to the question {question},, optimize and simplify the content. {str_context}";
+        var prompt = $@"According to the question {question}, optimize and simplify the content. {str_context}";
 
 
         var chatHistory = new ChatHistory();
-        chatHistory.AddSystemMessage("You are a helpful assistant that answers questions based on the provided context.");
+        chatHistory.AddSystemMessage("You are a helpful assistant that answers questions based on the provided context. Answer in french");
         chatHistory.AddUserMessage(prompt);
 
         var fullMessage = string.Empty;
 
-        await foreach (var chatUpdate in _chatService.GetStreamingChatMessageContentsAsync(chatHistory, cancellationToken: default))
+        await foreach (var chatUpdate in chatService.GetStreamingChatMessageContentsAsync(chatHistory, cancellationToken: default))
         {
             if (chatUpdate.Content is { Length: > 0 })
             {
@@ -156,48 +166,51 @@ public class RagQueryService
     }
 }
 
-public class DocumentIngestionService
+public class DocumentIngestionService(IEmbeddingGenerator<string, Embedding<float>> embeddingService, VectorStoreService vectorStoreService)
 {
-    private readonly IEmbeddingGenerator<string, Embedding<float>> _embeddingService;
-    private readonly VectorStoreService _vectorStoreService;
-
-    public DocumentIngestionService(IEmbeddingGenerator<string, Embedding<float>> embeddingService, VectorStoreService vectorStoreService)
-    {
-        _embeddingService = embeddingService;
-        _vectorStoreService = vectorStoreService;
-    }
-
     public async Task IngestDocumentAsync(string documentPath, string documentId)
     {
         var content = await File.ReadAllTextAsync(documentPath);
         var chunks = ChunkText(content, 300, 60);
 
-        for (int i = 0; i < chunks.Count; i++)
-        {
-            var chunk = chunks[i];
-            var embeddingResult = await _embeddingService.GenerateAsync(chunk);
-            var embedding = embeddingResult.Vector;
-
-            await _vectorStoreService.UpsertAsync(
-                id: Guid.NewGuid().ToString(),
-                embedding: embedding,
-                metadata: new Dictionary<string, object>
+        var incre = 100 / chunks.Count;
+        await AnsiConsole.Progress()
+            .Columns(new TaskDescriptionColumn(), new PercentageColumn(), new SpinnerColumn())
+                .StartAsync(async ctx =>
                 {
-                    ["document_id"] = documentId,
-                    ["chunk_index"] = i,
-                    ["text"] = chunk,
-                    ["document_path"] = documentPath
-                }
-            );
-        }
+                    // Define tasks
+                    var task1 = ctx.AddTask("[yellow]Chargement du document[/]");
+
+                    for (var i = 0; i < chunks.Count; i++)
+                    {
+                        var chunk = chunks[i];
+                        var embeddingResult = await embeddingService.GenerateAsync(chunk);
+                        var embedding = embeddingResult.Vector;
+
+
+                        await vectorStoreService.UpsertAsync(
+                            id: Guid.NewGuid().ToString(),
+                            embedding: embedding,
+                            metadata: new Dictionary<string, object>
+                            {
+                                ["document_id"] = documentId,
+                                ["chunk_index"] = i,
+                                ["text"] = chunk,
+                                ["document_path"] = documentPath
+                            }
+                        );
+                        task1.Increment(incre);
+                    }
+                });      
+       
     }
 
-    private List<string> ChunkText(string text, int chunkSize, int overlap)
+    private static List<string> ChunkText(string text, int chunkSize, int overlap)
     {
         var chunks = new List<string>();
         var words = text.Split(' ', StringSplitOptions.RemoveEmptyEntries);
 
-        for (int i = 0; i < words.Length; i += chunkSize - overlap)
+        for (var i = 0; i < words.Length; i += chunkSize - overlap)
         {
             var chunkWords = words.Skip(i).Take(chunkSize).ToArray();
             var chunk = string.Join(" ", chunkWords);

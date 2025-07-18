@@ -1,8 +1,7 @@
-﻿using Microsoft.Extensions.AI;
-using Microsoft.Extensions.DependencyInjection;
+﻿using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using ModelContextProtocol;
-using ModelContextProtocol.Protocol.Types;
+using ModelContextProtocol.Protocol;
 using Serilog;
 
 var builder = Host.CreateApplicationBuilder(args);

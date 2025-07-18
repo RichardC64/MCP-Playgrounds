@@ -1,6 +1,6 @@
 ﻿using Microsoft.Extensions.Logging;
 using ModelContextProtocol.Client;
-using ModelContextProtocol.Protocol.Transport;
+using ModelContextProtocol.Protocol;
 using Serilog;
 using Spectre.Console;
 
@@ -47,8 +47,8 @@ public static class UseMcpPlaygroundServer
 
             var result = await client.CallToolAsync(selectedTool, toolArgs);
 
-            var response = result.Content.First(c => c.Type == "text")?.Text;
-            AnsiConsole.MarkupLine(result.IsError ?
+            var response = (result.Content.First(c => c is TextContentBlock) as TextContentBlock)?.Text;
+            AnsiConsole.MarkupLine(result.IsError == true ?
                 $"[red]Erreur : {response}[/]" : 
                 $"[green]Réponse : {response}[/]");
         }

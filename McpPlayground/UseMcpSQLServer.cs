@@ -1,12 +1,11 @@
 ﻿using Microsoft.Extensions.AI;
 using Microsoft.Extensions.Logging;
 using ModelContextProtocol.Client;
-using ModelContextProtocol.Protocol.Transport;
 using Serilog;
 using Spectre.Console;
 using System.Text.Json;
 using Mcp_SQLServer;
-using ModelContextProtocol.Protocol.Types;
+using ModelContextProtocol.Protocol;
 
 namespace McpPlayground;
 
@@ -85,8 +84,9 @@ public static class UseMcpSQLServer
             var pt = await mcpClient.GetPromptAsync(prompt.Name);
             foreach (var promptMessage in pt.Messages)
             {
-                Console.WriteLine($"{promptMessage.Role} : {promptMessage.Content.Text}");
-                messages.Add(new ChatMessage( promptMessage.Role == Role.Assistant ? ChatRole.Assistant : ChatRole.User, promptMessage.Content.Text));
+                if (promptMessage.Content is not TextContentBlock textContent)continue;
+                Console.WriteLine($"{promptMessage.Role} : {textContent.Text}");
+                messages.Add(new ChatMessage( promptMessage.Role == Role.Assistant ? ChatRole.Assistant : ChatRole.User, textContent.Text));
             }
         }
 

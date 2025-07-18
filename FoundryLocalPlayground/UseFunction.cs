@@ -2,7 +2,6 @@
 using Microsoft.AI.Foundry.Local;
 using Microsoft.Extensions.AI;
 using ModelContextProtocol.Client;
-using ModelContextProtocol.Protocol.Transport;
 using OpenAI;
 
 namespace FoundryLocalPlayground;
@@ -28,11 +27,11 @@ public class UseFunction : IUse
         var tvClient = await McpClientFactory.CreateAsync(new StdioClientTransport(transportOptions));
         var tools = await tvClient.ListToolsAsync().ConfigureAwait(false);
         
-        var chatClient1 = new OpenAIClient(
-                new ApiKeyCredential(manager.ApiKey),
-                new OpenAIClientOptions { Endpoint = manager.Endpoint })
-            .GetChatClient(model.ModelId)
-            .AsIChatClient();
+        //var chatClient1 = new OpenAIClient(
+        //        new ApiKeyCredential(manager.ApiKey),
+        //        new OpenAIClientOptions { Endpoint = manager.Endpoint })
+        //    .GetChatClient(model.ModelId)
+        //    .AsIChatClient();
 
       var chatClient =  new ChatClientBuilder(
                 new OpenAIClient(new ApiKeyCredential(manager.ApiKey), new OpenAIClientOptions { Endpoint = manager.Endpoint })

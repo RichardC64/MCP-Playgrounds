@@ -2,7 +2,6 @@
 using Microsoft.Extensions.AI;
 using Microsoft.Extensions.Logging;
 using ModelContextProtocol.Client;
-using ModelContextProtocol.Protocol.Transport;
 using Serilog;
 using Spectre.Console;
 

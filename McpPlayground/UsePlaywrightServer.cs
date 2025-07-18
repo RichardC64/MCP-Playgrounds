@@ -1,5 +1,5 @@
 ﻿using ModelContextProtocol.Client;
-using ModelContextProtocol.Protocol.Transport;
+using ModelContextProtocol.Protocol;
 using Spectre.Console;
 
 namespace McpPlayground;
@@ -27,7 +27,7 @@ public static class UsePlaywrightServer
         var result = await client.CallToolAsync(
             "browser_navigate",
             new Dictionary<string, object?> { ["url"] = "https://github.com/microsoft/playwright-mcp" });
-        var response = result.Content.First(c => c.Type == "text")?.Text;
+        var response = (result.Content.First(c => c is TextContentBlock) as TextContentBlock)?.Text;
         AnsiConsole.WriteLine(response ?? "???");
 
         await client.DisposeAsync();

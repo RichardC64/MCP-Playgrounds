@@ -1,7 +1,7 @@
 ﻿using System.Text.Json.Serialization;
 using Microsoft.Extensions.Logging;
 using ModelContextProtocol.Client;
-using ModelContextProtocol.Protocol.Transport;
+using ModelContextProtocol.Protocol;
 using Serilog;
 using Spectre.Console;
 
@@ -37,8 +37,8 @@ public static class UseMcpPlaygroundServerComplexDatas
 
         var result = await client.CallToolAsync(selectedTool);
 
-        var response = result.Content.First(c => c.Type == "text").Text;
-        if (result.IsError)
+        var response = (result.Content.First(c => c is TextContentBlock) as TextContentBlock)?.Text;
+        if (result.IsError == true)
             AnsiConsole.MarkupLine($"[red]Erreur : {response}[/]");
         else
         {
