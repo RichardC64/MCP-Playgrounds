@@ -1,6 +1,8 @@
-﻿public enum Uses
+﻿namespace FoundryLocalPlayground;
+
+public enum Uses
 {
     FoundryOllama,
     UseFunction,
-    UseEmbeddings
+    UseEmbeddingsSk,
 }

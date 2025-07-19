@@ -2,14 +2,13 @@
 using Microsoft.Extensions.AI;
 using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.ChatCompletion;
-using Microsoft.SemanticKernel.Connectors.Onnx;
 using Qdrant.Client;
 using Qdrant.Client.Grpc;
 using Spectre.Console;
 
 namespace FoundryLocalPlayground;
 
-public class UseEmbeddings : IUse
+public class UseEmbeddingsSk : IUse
 {
     private readonly string _alias = "qwen2.5-0.5b";
     private readonly string _embeddModelPath = "c:\\LlmCache\\jina-embeddings-v2-base-en\\model.onnx";
@@ -19,7 +18,6 @@ public class UseEmbeddings : IUse
 
     private readonly string _docPath = "C:\\LlmCache\\jina-embeddings-v2-base-en\\doc.txt";
     private readonly string _docId = "4";
-
 
 
     public async Task ExecuteAsync()
@@ -32,27 +30,21 @@ public class UseEmbeddings : IUse
         AnsiConsole.MarkupLine("[green]Initialisation de Semantic Kernel[/]");
 
         // voir l'exemple NoteBook: https://github.com/microsoft/Foundry-Local/tree/main/samples/dotNET/rag
-        var builder = Kernel.CreateBuilder();
-
-        builder.AddBertOnnxEmbeddingGenerator(_embeddModelPath, _embedVocab);
-        builder.AddOpenAIChatCompletion(model.ModelId, endpoint: manager.Endpoint, apiKey: manager.ApiKey,serviceId: model.ModelId);
-
-        var kernel = builder.Build();
-
-        var chatService = kernel.GetRequiredService<IChatCompletionService>(model.ModelId);
-        var embeddingService = kernel.GetRequiredService<IEmbeddingGenerator<string, Embedding<float>>>();
+        var kernel = Kernel.CreateBuilder()
+            .AddBertOnnxEmbeddingGenerator(_embeddModelPath, _embedVocab)
+            .AddOpenAIChatCompletion(model.ModelId, endpoint: manager.Endpoint, apiKey: manager.ApiKey, serviceId: model.ModelId)
+            .Build();
 
         AnsiConsole.MarkupLine("[green]Initialisation de qDrant[/]");
         var vectorStoreService = new VectorStoreService(
             $"http://localhost:{_qDrantGrpcPort}",
-            "",
             "demodocs");
-
         await vectorStoreService.InitializeAsync();
 
         AnsiConsole.MarkupLine("[green]Ingestion...[/]");
+        var embeddingService = kernel.GetRequiredService<IEmbeddingGenerator<string, Embedding<float>>>();
         var documentIngestionService = new DocumentIngestionService(embeddingService, vectorStoreService);
-        var ragQueryService = new RagQueryService(embeddingService, chatService, vectorStoreService);
+        
 
         // ingestion du document
         await documentIngestionService.IngestDocumentAsync(_docPath, _docId);
@@ -61,6 +53,8 @@ public class UseEmbeddings : IUse
         // interrogation du document
         var question = "Qu'est-ce que Foundry Local?";
 
+        var chatService = kernel.GetRequiredService<IChatCompletionService>(model.ModelId);
+        var ragQueryService = new RagQueryService(embeddingService, chatService, vectorStoreService);
         var answer = await ragQueryService.QueryAsync(question);
 
         Console.WriteLine($"Question: {question}");
@@ -68,26 +62,19 @@ public class UseEmbeddings : IUse
     }
 }
 
-public class VectorStoreService
+public class VectorStoreService(string endpoint, string collectionName)
 {
-    private readonly QdrantClient _client;
-    private readonly string _collectionName;
-
-    public VectorStoreService(string endpoint, string apiKey, string collectionName)
-    {
-        _client = new QdrantClient(new Uri(endpoint));
-        _collectionName = collectionName;
-    }
+    private readonly QdrantClient _client = new(new Uri(endpoint));
 
     public async Task InitializeAsync(int vectorSize = 768)
     {
         try
         {
-            await _client.GetCollectionInfoAsync(_collectionName);
+            await _client.GetCollectionInfoAsync(collectionName);
         }
         catch
         {
-            await _client.CreateCollectionAsync(_collectionName, new VectorParams
+            await _client.CreateCollectionAsync(collectionName, new VectorParams
             {
                 Size = (ulong)vectorSize,
                 Distance = Distance.Cosine
@@ -95,13 +82,12 @@ public class VectorStoreService
         }
     }
 
-    public async Task UpsertAsync(string id, ReadOnlyMemory<float> embedding, Dictionary<string, object> metadata)
+    public async Task UpsertAsync(ReadOnlyMemory<float> embedding, Dictionary<string, object> metadata)
     {
         var point = new PointStruct
         {
-            Id = new PointId { Uuid = id },
-            Vectors = embedding.ToArray(),
-            Payload = { }
+            Id = new PointId { Uuid = Guid.NewGuid().ToString() },
+            Vectors = embedding.ToArray()
         };
 
         foreach (var kvp in metadata)
@@ -115,12 +101,12 @@ public class VectorStoreService
             };
         }
 
-        await _client.UpsertAsync(_collectionName, new[] { point });
+        await _client.UpsertAsync(collectionName, [point]);
     }
 
     public async Task<List<ScoredPoint>> SearchAsync(ReadOnlyMemory<float> queryEmbedding, int limit = 3)
     {
-        var searchResult = await _client.SearchAsync(_collectionName, queryEmbedding.ToArray(), limit: (ulong)limit);
+        var searchResult = await _client.SearchAsync(collectionName, queryEmbedding.ToArray(), limit: (ulong)limit);
         return searchResult.ToList();
     }
 }
@@ -132,21 +118,18 @@ public class RagQueryService(
 {
     public async Task<string> QueryAsync(string question)
     {
-        // return question; // For now, just return the question as a placeholder
         var queryEmbeddingResult = await embeddingService.GenerateAsync(question);
-        //         Console.WriteLine(question);
-        var queryEmbedding = queryEmbeddingResult.Vector;
-        var searchResults = await vectorStoreService.SearchAsync(queryEmbedding, limit: 5);
+        var searchResults = await vectorStoreService.SearchAsync(queryEmbeddingResult.Vector, limit: 5);
 
-        var str_context = "";
+        var context = string.Empty;
         foreach (var result in searchResults)
         {
             if (result.Payload.TryGetValue("text", out var text))
             {
-                str_context += text.ToString();
+                context += text.ToString();
             }
         }
-        var prompt = $@"According to the question {question}, optimize and simplify the content. {str_context}";
+        var prompt = $"According to the question {question}, optimize and simplify the content. {context}";
 
 
         var chatHistory = new ChatHistory();
@@ -155,14 +138,14 @@ public class RagQueryService(
 
         var fullMessage = string.Empty;
 
-        await foreach (var chatUpdate in chatService.GetStreamingChatMessageContentsAsync(chatHistory, cancellationToken: default))
+        await foreach (var chatUpdate in chatService.GetStreamingChatMessageContentsAsync(chatHistory))
         {
             if (chatUpdate.Content is { Length: > 0 })
             {
                 fullMessage += chatUpdate.Content;
             }
         }
-        return fullMessage ?? "I couldn't generate a response.";
+        return fullMessage;
     }
 }
 
@@ -173,24 +156,21 @@ public class DocumentIngestionService(IEmbeddingGenerator<string, Embedding<floa
         var content = await File.ReadAllTextAsync(documentPath);
         var chunks = ChunkText(content, 300, 60);
 
-        var incre = 100 / chunks.Count;
+        var increment = 100 / chunks.Count;
         await AnsiConsole.Progress()
             .Columns(new TaskDescriptionColumn(), new PercentageColumn(), new SpinnerColumn())
                 .StartAsync(async ctx =>
                 {
                     // Define tasks
-                    var task1 = ctx.AddTask("[yellow]Chargement du document[/]");
+                    var task = ctx.AddTask("[yellow]Chargement du document[/]");
 
                     for (var i = 0; i < chunks.Count; i++)
                     {
                         var chunk = chunks[i];
                         var embeddingResult = await embeddingService.GenerateAsync(chunk);
-                        var embedding = embeddingResult.Vector;
-
 
                         await vectorStoreService.UpsertAsync(
-                            id: Guid.NewGuid().ToString(),
-                            embedding: embedding,
+                            embedding: embeddingResult.Vector,
                             metadata: new Dictionary<string, object>
                             {
                                 ["document_id"] = documentId,
@@ -199,7 +179,7 @@ public class DocumentIngestionService(IEmbeddingGenerator<string, Embedding<floa
                                 ["document_path"] = documentPath
                             }
                         );
-                        task1.Increment(incre);
+                        task.Increment(increment);
                     }
                 });      
        
