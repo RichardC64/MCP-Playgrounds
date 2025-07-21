@@ -10,13 +10,13 @@ namespace FoundryLocalPlayground;
 
 public class UseEmbeddingsMs : IUse
 {
-    private readonly string _alias = "jina-embeddings-v2-base-en";
-   // private readonly string _embeddModelPath = "C:\\Users\\RichardClark\\.foundry\\cache\\models\\Microsoft\\qwen2.5-0.5b-instruct-cuda-gpu\\v3\\model.onnx";
-    //private readonly string _embedVocab = "C:\\Users\\RichardClark\\.foundry\\cache\\models\\Microsoft\\qwen2.5-0.5b-instruct-cuda-gpu\\v3\\vocab.json";
+    private readonly string _alias = "qwen2.5-14b";
+   private readonly string _embeddModelPath = "C:\\LlmCache\\jinaaijina-embeddings-v3\\model.onnx";
+   private readonly string _embedVocab = "C:\\LlmCache\\jinaaijina-embeddings-v3\\tokenizer.json";
     // port 32770 et 32771 sont les ports par défaut de Qdrant dans Foundry Local avec mon Docker
     private readonly string _qDrantGrpcPort = "32771";
 
-    private readonly string _docPath = "C:\\LlmCache\\jina-embeddings-v2-base-en\\doc.txt";
+    private readonly string _docPath = "C:\\LlmCache\\jinaaijina-embeddings-v3\\doc.txt";
     private readonly string _docId = "5";
 
 
@@ -33,10 +33,9 @@ public class UseEmbeddingsMs : IUse
         var client = new OpenAIClient(
             new ApiKeyCredential(manager.ApiKey),
             new OpenAIClientOptions { Endpoint = manager.Endpoint });
-       var embeddedClient = client.GetEmbeddingClient(model.ModelId);
-      
-
-       var r = await embeddedClient.GenerateEmbeddingAsync("coucou");
+       var generator = client.GetEmbeddingClient(model.ModelId).AsIEmbeddingGenerator();
+    
+       var embedding = await generator.GenerateAsync("test");
        
 
        

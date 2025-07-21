@@ -9,12 +9,14 @@ namespace FoundryLocalPlayground;
 public class UseEmbeddingsSk : IUse
 {
     private readonly string _alias = "qwen2.5-0.5b";
-    private readonly string _embeddModelPath = "c:\\LlmCache\\jina-embeddings-v2-base-en\\model.onnx";
-    private readonly string _embedVocab = "c:\\LlmCache\\jina-embeddings-v2-base-en\\vocab.txt";
+    //private readonly string _embeddModelPath = "c:\\LlmCache\\jina-embeddings-v2-base-en\\model.onnx";
+    //private readonly string _embedVocab = "c:\\LlmCache\\jina-embeddings-v2-base-en\\vocab.txt";
+    private readonly string _embeddModelPath = "C:\\LlmCache\\jinaaijina-embeddings-v2-base-en\\model.onnx";
+    private readonly string _embedVocab = "C:\\LlmCache\\jinaaijina-embeddings-v2-base-en\\vocab.txt";
     // port 32770 et 32771 sont les ports par défaut de Qdrant dans Foundry Local avec mon Docker
     private readonly string _qDrantGrpcPort = "32771";
 
-    private readonly string _docPath = "C:\\LlmCache\\jina-embeddings-v2-base-en\\doc.txt";
+    private readonly string _docPath = "C:\\LlmCache\\test.txt";
     private readonly string _docId = "4";
 
 
