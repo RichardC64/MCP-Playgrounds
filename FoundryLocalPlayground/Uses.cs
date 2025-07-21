@@ -5,4 +5,5 @@ public enum Uses
     FoundryOllama,
     UseFunction,
     UseEmbeddingsSk,
+    UseEmbeddingsFl
 }
