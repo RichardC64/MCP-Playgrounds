@@ -18,11 +18,16 @@ public class DocumentIngestionService(IEmbeddingGenerator<string, Embedding<floa
                 // Define tasks
                 var task = ctx.AddTask("[yellow]Chargement du document[/]");
 
+                
                 for (var i = 0; i < chunks.Count; i++)
                 {
                     var chunk = chunks[i];
-                    var embeddingResult = await embeddingService.GenerateAsync(chunk);
+                    var embeddingResult = await embeddingService.GenerateAsync(chunk, new EmbeddingGenerationOptions
+                    {
+                        Dimensions = 119547
+                    });
 
+                    
                     await vectorStoreService.UpsertAsync(
                         embedding: embeddingResult.Vector,
                         metadata: new Dictionary<string, object>

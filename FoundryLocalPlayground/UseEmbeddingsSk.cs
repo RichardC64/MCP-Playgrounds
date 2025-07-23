@@ -2,6 +2,7 @@
 using Microsoft.Extensions.AI;
 using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.ChatCompletion;
+using Microsoft.SemanticKernel.Connectors.Onnx;
 using Spectre.Console;
 
 namespace FoundryLocalPlayground;
@@ -9,10 +10,11 @@ namespace FoundryLocalPlayground;
 public class UseEmbeddingsSk : IUse
 {
     private readonly string _alias = "qwen2.5-0.5b";
-    //private readonly string _embeddModelPath = "c:\\LlmCache\\jina-embeddings-v2-base-en\\model.onnx";
-    //private readonly string _embedVocab = "c:\\LlmCache\\jina-embeddings-v2-base-en\\vocab.txt";
-    private readonly string _embeddModelPath = "C:\\LlmCache\\jinaaijina-embeddings-v2-base-en\\model.onnx";
-    private readonly string _embedVocab = "C:\\LlmCache\\jinaaijina-embeddings-v2-base-en\\vocab.txt";
+    private readonly string _embeddedFolder = "C:\\python\\onnx\\solon";
+
+    private string EmbeddedModelPath => Path.Combine(_embeddedFolder, "model.onnx");
+    private string EmbeddedVocabPath => Path.Combine(_embeddedFolder, "vocab.txt");
+
     // port 32770 et 32771 sont les ports par défaut de Qdrant dans Foundry Local avec mon Docker
     private readonly string _qDrantGrpcPort = "32771";
 
@@ -31,7 +33,7 @@ public class UseEmbeddingsSk : IUse
 
         // voir l'exemple NoteBook: https://github.com/microsoft/Foundry-Local/tree/main/samples/dotNET/rag
         var kernel = Kernel.CreateBuilder()
-            .AddBertOnnxEmbeddingGenerator(_embeddModelPath, _embedVocab)
+            .AddBertOnnxEmbeddingGenerator(EmbeddedModelPath, EmbeddedVocabPath, new BertOnnxOptions())
             .AddOpenAIChatCompletion(model.ModelId, endpoint: manager.Endpoint, apiKey: manager.ApiKey, serviceId: model.ModelId)
             .Build();
 
@@ -39,7 +41,7 @@ public class UseEmbeddingsSk : IUse
         var vectorStoreService = new VectorStoreService(
             $"http://localhost:{_qDrantGrpcPort}",
             "demodocs");
-        await vectorStoreService.InitializeAsync();
+        await vectorStoreService.InitializeAsync(119547);
 
         AnsiConsole.MarkupLine("[green]Ingestion...[/]");
         var embeddingService = kernel.GetRequiredService<IEmbeddingGenerator<string, Embedding<float>>>();

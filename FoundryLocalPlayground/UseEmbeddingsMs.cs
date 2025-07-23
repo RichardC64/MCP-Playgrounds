@@ -10,9 +10,10 @@ namespace FoundryLocalPlayground;
 
 public class UseEmbeddingsMs : IUse
 {
+    // paraphrase-multilingual-MiniLM-L12-v2
     private readonly string _alias = "qwen2.5-14b";
-   private readonly string _embeddModelPath = "C:\\LlmCache\\jinaaijina-embeddings-v3\\model.onnx";
-   private readonly string _embedVocab = "C:\\LlmCache\\jinaaijina-embeddings-v3\\tokenizer.json";
+   private readonly string _embeddModelPath = "C:\\python\\onnx\\bert-multilingual\\model.onnx"; // "C:\\LlmCache\\jinaaijina-embeddings-v3\\model.onnx";
+   private readonly string _embedVocab = "C:\\python\\onnx\\bert-multilingual\\vocab.txt"; // "C:\\LlmCache\\jinaaijina-embeddings-v3\\tokenizer.json";
     // port 32770 et 32771 sont les ports par défaut de Qdrant dans Foundry Local avec mon Docker
     private readonly string _qDrantGrpcPort = "32771";
 
