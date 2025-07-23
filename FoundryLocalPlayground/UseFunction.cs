@@ -15,8 +15,6 @@ public class UseFunction : IUse
         var manager = await FoundryLocalManager.StartModelAsync(_alias);
         var model = await manager.GetModelInfoAsync(_alias);
         if (model == null) throw new ArgumentException("Model non trouvé");
-        
-
 
         var transportOptions = new StdioClientTransportOptions
         {
