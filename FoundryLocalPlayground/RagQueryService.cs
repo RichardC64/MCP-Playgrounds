@@ -11,7 +11,7 @@ internal class RagQueryService(
     public async Task<string> QueryAsync(string question)
     {
         var queryEmbeddingResult = await embeddingService.GenerateAsync(question);
-        var searchResults = await vectorStoreService.SearchAsync(queryEmbeddingResult.Vector, limit: 5);
+        var searchResults = await vectorStoreService.SearchAsync(queryEmbeddingResult.Vector, limit: 3);
 
         var context = string.Empty;
         foreach (var result in searchResults)
@@ -21,11 +21,11 @@ internal class RagQueryService(
                 context += text.ToString();
             }
         }
-        var prompt = $"According to the question {question}, optimize and simplify the content. {context}";
+        var prompt = $"Répond à la question : {question}, optimise et simplifie le contexte : {context}";
 
 
         var chatHistory = new ChatHistory();
-        chatHistory.AddSystemMessage("You are a helpful assistant that answers questions based on the provided context. Answer in french");
+        chatHistory.AddSystemMessage("Tu es un assistant qui répond aux question basé sur le contexte fourni. Répond le plus simplement possible en une seule phrase en français.");
         chatHistory.AddUserMessage(prompt);
 
         var fullMessage = string.Empty;

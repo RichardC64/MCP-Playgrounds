@@ -8,7 +8,7 @@ public class DocumentIngestionService(IEmbeddingGenerator<string, Embedding<floa
     public async Task IngestDocumentAsync(string documentPath, string documentId)
     {
         var content = await File.ReadAllTextAsync(documentPath);
-        var chunks = ChunkText(content, 300, 60);
+        var chunks = ChunkText(content, 128, 12);
 
         var increment = 100 / chunks.Count;
         await AnsiConsole.Progress()
@@ -22,10 +22,7 @@ public class DocumentIngestionService(IEmbeddingGenerator<string, Embedding<floa
                 for (var i = 0; i < chunks.Count; i++)
                 {
                     var chunk = chunks[i];
-                    var embeddingResult = await embeddingService.GenerateAsync(chunk, new EmbeddingGenerationOptions
-                    {
-                        Dimensions = 119547
-                    });
+                    var embeddingResult = await embeddingService.GenerateAsync(chunk);
 
                     
                     await vectorStoreService.UpsertAsync(
@@ -38,6 +35,7 @@ public class DocumentIngestionService(IEmbeddingGenerator<string, Embedding<floa
                             ["document_path"] = documentPath
                         }
                     );
+                    
                     task.Increment(increment);
                 }
             });      

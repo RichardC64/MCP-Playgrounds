@@ -9,8 +9,8 @@ namespace FoundryLocalPlayground;
 
 public class UseEmbeddingsSk : IUse
 {
-    private readonly string _alias = "qwen2.5-0.5b";
-    private readonly string _embeddedFolder = "C:\\python\\onnx\\solon";
+    private readonly string _alias = "phi-4-mini";
+    private readonly string _embeddedFolder = "C:\\python\\onnx-bert-multilingual";
 
     private string EmbeddedModelPath => Path.Combine(_embeddedFolder, "model.onnx");
     private string EmbeddedVocabPath => Path.Combine(_embeddedFolder, "vocab.txt");
@@ -18,7 +18,7 @@ public class UseEmbeddingsSk : IUse
     // port 32770 et 32771 sont les ports par défaut de Qdrant dans Foundry Local avec mon Docker
     private readonly string _qDrantGrpcPort = "32771";
 
-    private readonly string _docPath = "C:\\LlmCache\\test.txt";
+    private readonly string _docPath = "Rag\\test.txt";
     private readonly string _docId = "4";
 
 
@@ -34,6 +34,7 @@ public class UseEmbeddingsSk : IUse
         // voir l'exemple NoteBook: https://github.com/microsoft/Foundry-Local/tree/main/samples/dotNET/rag
         var kernel = Kernel.CreateBuilder()
             .AddBertOnnxEmbeddingGenerator(EmbeddedModelPath, EmbeddedVocabPath, new BertOnnxOptions())
+  
             .AddOpenAIChatCompletion(model.ModelId, endpoint: manager.Endpoint, apiKey: manager.ApiKey, serviceId: model.ModelId)
             .Build();
 
@@ -41,7 +42,7 @@ public class UseEmbeddingsSk : IUse
         var vectorStoreService = new VectorStoreService(
             $"http://localhost:{_qDrantGrpcPort}",
             "demodocs");
-        await vectorStoreService.InitializeAsync(119547);
+        await vectorStoreService.InitializeAsync();
 
         AnsiConsole.MarkupLine("[green]Ingestion...[/]");
         var embeddingService = kernel.GetRequiredService<IEmbeddingGenerator<string, Embedding<float>>>();
@@ -53,7 +54,7 @@ public class UseEmbeddingsSk : IUse
 
         AnsiConsole.MarkupLine("[green]Interrogation[/]");
         // interrogation du document
-        var question = "Qu'est-ce que Foundry Local?";
+        var question = "Ou se situe TownVille.";
 
         var chatService = kernel.GetRequiredService<IChatCompletionService>(model.ModelId);
         var ragQueryService = new RagQueryService(embeddingService, chatService, vectorStoreService);
