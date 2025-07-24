@@ -1,0 +1,15 @@
+# Utilise une image de base (ici, une image officielle Python)
+FROM python:latest
+
+# Crée un répertoire dans le conteneur
+WORKDIR /app
+
+# Copie les fichiers locaux dans le conteneur
+COPY test.py  /app/
+
+# Installe les dépendances Python
+RUN pip install transformers optimum[onnxruntime] torch
+
+
+# Définit la commande à exécuter au démarrage du conteneur
+CMD ["python", "test.py"]
