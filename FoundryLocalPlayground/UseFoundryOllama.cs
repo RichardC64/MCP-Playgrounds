@@ -8,7 +8,7 @@ namespace FoundryLocalPlayground;
 
 public class UseFoundryOllama : IUse
 {
-    private readonly string _alias = "mistral-7b-v0.2";
+    private readonly string _alias = "phi-4";
     private readonly string _ollamaModelId = "mistral";
     private readonly int[] _iterations = [0]; // [0, 1, 2, 3];
     public async Task ExecuteAsync()

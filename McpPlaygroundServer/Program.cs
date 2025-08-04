@@ -10,7 +10,7 @@ Log.Information("Start server...");
 builder.Services.AddSerilog(configure =>
 {
     configure.MinimumLevel.Verbose();
-    configure.WriteTo.File("logs/server_log.txt", rollingInterval: RollingInterval.Day);
+    configure.WriteTo.File("c:/logs/server_log.txt", rollingInterval: RollingInterval.Day);
 });
 
 var _minimumLoggingLevel = LoggingLevel.Debug;
