@@ -4,5 +4,6 @@ public enum Uses
 {
     FoundryOllama,
     UseFunction,
-    UseEmbeddingsSk
+    UseEmbeddingsSk, 
+    UseGptOss
 }
